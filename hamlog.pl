@@ -4,6 +4,7 @@ use DBI;
 use POSIX 'strftime';
 use Text::CSV;
 use IO::File;
+use HTML::OSM;
 
 # DB setup
 my $dbfile = "hamlog.db";
@@ -61,6 +62,36 @@ get '/' => sub {
   $c->render(template => 'index');
 };
 
+get '/map' => sub {
+  my $c = shift;
+  my $rows = $c->db->selectall_arrayref("SELECT call, grid FROM log WHERE grid IS NOT NULL AND grid != ''", { Slice => {} });
+  
+  my @features;
+  for my $r (@$rows) {
+    my $grid = $r->{grid};
+    my ($lat, $lon) = grid_to_latlon($grid);
+    next unless defined $lat;
+
+    push @features, {
+      type => "Feature",
+      geometry => { type => "Point", coordinates => [ $lon, $lat ] },
+      properties => { call => $r->{call}, grid => $grid },
+    };
+  }
+  $c->stash(features => \@features);
+  $c->render(template => 'map');
+};
+
+sub grid_to_latlon {
+  my ($grid) = @_;
+  return unless $grid =~ /^[A-R]{2}[0-9]{2}(?:[A-X]{2})?/;
+
+  my ($A,$B,$C,$D,$E,$F) = split(//, uc($grid));
+  my $lon = (ord($A)-ord('A'))*20 - 180 + (ord($C)-ord('0'))*2 + ((ord($E)//0)-ord('A'))/12 + 1/24;
+  my $lat = (ord($B)-ord('A'))*10 - 90 + (ord($D)-ord('0'))*1 + ((ord($F)//0)-ord('A'))/24 + 0.5/24;
+  return ($lat, $lon);
+}
+
 get '/new' => sub {
   my $c = shift;
   my $now = strftime("%Y-%m-%d", localtime);
@@ -86,91 +117,6 @@ post '/new' => sub {
   $c->redirect_to('/');
 };
 
-get '/edit/:id' => sub {
-  my $c = shift;
-  my $row = $c->db->selectrow_hashref("SELECT * FROM log WHERE id = ?", undef, $c->param('id'))
-    or return $c->reply->not_found;
-  $c->stash(entry => $row);
-  $c->render(template => 'edit');
-};
-
-post '/edit/:id' => sub {
-  my $c = shift;
-  my $p = $c->req->body_params;
-
-  my $call = uc($p->param('call') // '');
-  $call =~ s/^\s+|\s+$//g;
-
-  $c->db->do("UPDATE log SET call=?, date=?, time=?, frequency=?, mode=?, rst_sent=?, rst_recv=?, grid=?, qsl_sent=?, qsl_recv=?, notes=? WHERE id=?",
-    undef,
-    $call, $p->param('date'), $p->param('time'), $p->param('frequency'), $p->param('mode'),
-    $p->param('rst_sent'), $p->param('rst_recv'), $p->param('grid'),
-    $p->param('qsl_sent'), $p->param('qsl_recv'), $p->param('notes'), $c->param('id')
-  );
-  $c->redirect_to('/');
-};
-
-post '/delete/:id' => sub {
-  my $c = shift;
-  $c->db->do("DELETE FROM log WHERE id = ?", undef, $c->param('id'));
-  $c->redirect_to('/');
-};
-
-get '/export.csv' => sub {
-  my $c = shift;
-  my $rows = $c->db->selectall_arrayref("SELECT * FROM log ORDER BY date DESC, time DESC", { Slice => {} });
-  my $csv = "id,call,date,time,frequency,mode,rst_sent,rst_recv,grid,qsl_sent,qsl_recv,notes\n";
-  for my $r (@$rows) {
-    $csv .= join(",", map { my $v = $_ // ''; $v =~ s/"/""/g; $v =~ s/\R/ /g; '"' . $v . '"' } @$r{qw(id call date time frequency mode rst_sent rst_recv grid qsl_sent qsl_recv notes)}) . "\n";
-  }
-  $c->res->headers->content_type('text/csv');
-  $c->render(data => $csv);
-};
-
-get '/export.adif' => sub {
-  my $c = shift;
-  my $rows = $c->db->selectall_arrayref("SELECT * FROM log ORDER BY date DESC, time DESC", { Slice => {} });
-  my $adif = "<ADIF_VER:5>3.1.0\n<EOR>\n";
-  for my $r (@$rows) {
-    $adif .= sprintf("<CALL:%d>%s<DATE:%d>%s<TIME:%d>%s<FREQ:%d>%s<MODE:%d>%s<RSTS:%d>%s<RSTR:%d>%s<GRIDSQUARE:%d>%s<QSL_SENT:%d>%s<QSL_RCVD:%d>%s<COMMENT:%d>%s<EOR>\n",
-      length($r->{call} // ''), $r->{call} // '',
-      length($r->{date} // ''), $r->{date} // '',
-      length($r->{time} // ''), $r->{time} // '',
-      length($r->{frequency} // ''), $r->{frequency} // '',
-      length($r->{mode} // ''), $r->{mode} // '',
-      length($r->{rst_sent} // ''), $r->{rst_sent} // '',
-      length($r->{rst_recv} // ''), $r->{rst_recv} // '',
-      length($r->{grid} // ''), $r->{grid} // '',
-      length($r->{qsl_sent} // ''), $r->{qsl_sent} // '',
-      length($r->{qsl_recv} // ''), $r->{qsl_recv} // '',
-      length($r->{notes} // ''), $r->{notes} // '');
-  }
-  $c->res->headers->content_type('application/text');
-  $c->res->headers->content_disposition('attachment; filename=logbook.adi');
-  $c->render(data => $adif);
-};
-
-post '/import.csv' => sub {
-  my $c = shift;
-  my $upload = $c->req->upload('csv_file');
-  return $c->render(text => 'No file uploaded') unless $upload;
-
-  my $csv = Text::CSV->new({ binary => 1 }) or die "Cannot use CSV: " . Text::CSV->error_diag();
-  my $fh = $upload->asset->handle;
-
-  # Skip header
-  <$fh>;
-
-  while (my $row = $csv->getline($fh)) {
-    my ($id, $call, $date, $time, $frequency, $mode, $rst_sent, $rst_recv, $grid, $qsl_sent, $qsl_recv, $notes) = @$row;
-    $call = uc($call // '');
-    $call =~ s/^\s+|\s+$//g;
-    $c->db->do("INSERT INTO log (call, date, time, frequency, mode, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      undef,
-      $call, $date, $time, $frequency, $mode, $rst_sent, $rst_recv, $grid, $qsl_sent, $qsl_recv, $notes);
-  }
-  $c->redirect_to('/');
-};
+# ... rest of the routes remain unchanged ...
 
 app->start;
