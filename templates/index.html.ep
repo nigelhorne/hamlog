@@ -3,6 +3,10 @@
 
 <h1>Amateur Radio Log Book</h1>
 
+% if (session 'user_id') {
+  <p>Logged in as user ID <%= session 'user_id' %>. <a href="/logout">Logout</a></p>
+% }
+
 <form method="GET" action="/">
   <fieldset>
     <legend>Filter QSOs</legend>

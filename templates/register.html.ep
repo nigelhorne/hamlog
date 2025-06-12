@@ -1,0 +1,16 @@
+% layout 'default';
+% title 'Register';
+
+<h1>Register</h1>
+
+<form method="post" action="/register">
+  <label for="username">Username:</label><br>
+  <input type="text" name="username" id="username" required autofocus><br><br>
+
+  <label for="password">Password:</label><br>
+  <input type="password" name="password" id="password" required><br><br>
+
+  <button type="submit">Register</button>
+</form>
+
+<p>Already have an account? <a href="/login">Login here</a>.</p>
