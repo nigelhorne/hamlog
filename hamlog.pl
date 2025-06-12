@@ -121,6 +121,7 @@ post '/login' => sub {
     unless $user && $user->{password} eq hash_password($password);
 
   $c->session(user_id => $user->{id});
+  $c->session(user_name => $user->{username});
   $c->redirect_to('/');
 };
 
@@ -162,6 +163,11 @@ get '/' => sub {
   my $rows = $c->db->selectall_arrayref($sql, { Slice => {} }, @bind);
   $c->stash(log => $rows);
   $c->render(template => 'index');
+};
+
+get '/export' => sub {
+  my $c = shift;
+  $c->render(template => 'export');
 };
 
 get '/export/csv' => sub {
@@ -291,5 +297,60 @@ post '/new' => sub {
   $c->redirect_to('/');
 };
 
+post '/delete/:id' => sub {
+  my $c  = shift;
+  my $id = $c->param('id');
+  $c->db->do("DELETE FROM log WHERE id = ?", undef, $id);
+  $c->redirect_to('/');
+};
+
+get '/import' => sub {
+  my $c = shift;
+  $c->render(template => 'import');
+};
+
+post '/import/csv' => sub {
+  my $c = shift;
+  my $upload = $c->req->upload('file');
+  return $c->render(text => 'No file uploaded') unless $upload;
+
+  my $csv = Text::CSV->new({ binary => 1, auto_diag => 1 });
+  open my $fh, '<', $upload->asset->path or return $c->render(text => "Failed to read file");
+
+  my $header = $csv->getline($fh);
+  while (my $row = $csv->getline($fh)) {
+    my %data;
+    @data{@$header} = @$row;
+
+    $c->db->do("INSERT INTO log (date, time, call, frequency, mode, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      undef,
+      @data{qw/date time call frequency mode rst_sent rst_recv grid qsl_sent qsl_recv notes/}
+    );
+  }
+  close $fh;
+  $c->redirect_to('/');
+};
+
+post '/import/adif' => sub {
+  my $c = shift;
+  my $upload = $c->req->upload('file');
+  return $c->render(text => 'No file uploaded') unless $upload;
+
+  open my $fh, '<', $upload->asset->path or return $c->render(text => "Failed to read file");
+  local $/ = "<EOR>";
+
+  while (my $record = <$fh>) {
+    my %qso;
+    while ($record =~ /<(\w+):\d+>([^<]*)/g) {
+      $qso{uc $1} = $2;
+    }
+    $c->db->do("INSERT INTO log (date, time, call, frequency, mode, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      undef,
+      $qso{QSO_DATE}, $qso{TIME_ON}, $qso{CALL}, $qso{FREQ}, $qso{MODE}, $qso{RST_SENT}, $qso{RST_RCVD}, $qso{GRIDSQUARE}, $qso{QSL_SENT}, $qso{QSL_RCVD}, $qso{COMMENT}
+    );
+  }
+  close $fh;
+  $c->redirect_to('/');
+};
 
 app->start;

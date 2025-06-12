@@ -1,0 +1,24 @@
+% layout 'default';
+% title 'Import Log';
+
+<h2>Import Log</h2>
+
+<p class="mb-3">Upload a log file in either <strong>CSV</strong> or <strong>ADIF</strong> format to import QSOs into your logbook.</p>
+
+<div class="mb-4">
+  <form method="post" action="/import/csv" enctype="multipart/form-data" class="mb-3">
+    <div class="mb-2">
+      <label for="csvfile" class="form-label">CSV File</label>
+      <input type="file" class="form-control" id="csvfile" name="file" accept=".csv" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Import CSV</button>
+  </form>
+
+  <form method="post" action="/import/adif" enctype="multipart/form-data">
+    <div class="mb-2">
+      <label for="adiffile" class="form-label">ADIF File</label>
+      <input type="file" class="form-control" id="adiffile" name="file" accept=".adi,.adif" required>
+    </div>
+    <button type="submit" class="btn btn-secondary">Import ADIF</button>
+  </form>
+</div>

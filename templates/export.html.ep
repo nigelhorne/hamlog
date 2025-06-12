@@ -1,0 +1,11 @@
+% layout 'default';
+% title 'Export Log';
+
+<h2>Export Log</h2>
+
+<p>You can export your QSO log in either <strong>CSV</strong> or <strong>ADIF</strong> format.</p>
+
+<div class="mb-3">
+  <a href="/export/csv" class="btn btn-primary">Download CSV</a>
+  <a href="/export/adif" class="btn btn-secondary">Download ADIF</a>
+</div>
