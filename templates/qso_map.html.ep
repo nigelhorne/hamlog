@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>QSO Map View</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #qso-map { height: 600px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Logged QSO Map</h1>
+
+    <div id="qso-map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const qsoMap = L.map('qso-map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(qsoMap);
+
+    const qsoPoints = <%= json $qso_data %>;
+
+    qsoPoints.forEach(qso => {
+      const marker = L.marker([qso.lat, qso.lon]).addTo(qsoMap);
+      marker.bindPopup(`
+        <strong>Callsign:</strong> ${qso.call}<br>
+        <strong>Grid:</strong> ${qso.grid}<br>
+        <strong>Date:</strong> ${qso.date}<br>
+        <strong>Freq:</strong> ${qso.frequency} MHz<br>
+        <strong>Mode:</strong> ${qso.mode}<br>
+      `);
+    });
+  </script>
+</body>
+</html>

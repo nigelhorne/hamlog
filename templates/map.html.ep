@@ -1,50 +1,53 @@
 % layout 'default';
 % title 'QSO Grid Square Map';
 
+% content_for head => begin
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+e2FvKkO6LwzLTh7U3dph+qR3P8se8EbyFvJ4XnMM="
+    crossorigin=""
+  />
+% end
+
+% content_for scripts => begin
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-o9N1j7f1iTfJo+XODTzZYy6sJNh1RdZb+zZi0b6z0L0="
+    crossorigin=""
+  ></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var map = L.map('map').setView([20, 0], 2);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      var geojson = {
+        "type": "FeatureCollection",
+        "features": <%= json(stash('features') || []) %>
+      };
+
+      function onEachFeature(feature, layer) {
+        if (feature.properties) {
+          var popupContent = '<strong>Call Sign:</strong> ' + feature.properties.call + '<br>' +
+                             '<strong>Grid:</strong> ' + feature.properties.grid;
+          layer.bindPopup(popupContent);
+        }
+      }
+
+      L.geoJSON(geojson, {
+        onEachFeature: onEachFeature,
+        pointToLayer: function (feature, latlng) {
+          return L.marker(latlng);
+        }
+      }).addTo(map);
+    });
+  </script>
+% end
+
 <h1>QSO Grid Square Map</h1>
-
 <div id="map" style="width: 100%; height: 600px;"></div>
-
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  integrity="sha256-sA+e2FvKkO6LwzLTh7U3dph+qR3P8se8EbyFvJ4XnMM="
-  crossorigin=""
-/>
-<script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-o9N1j7f1iTfJo+XODTzZYy6sJNh1RdZb+zZi0b6z0L0="
-  crossorigin=""
-></script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    var map = L.map('map').setView([20, 0], 2);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-	var geojson = {
-	  "type": "FeatureCollection",
-	  "features": <%= json(stash('features') || []) %>
-	};
-    
-
-    function onEachFeature(feature, layer) {
-      if (feature.properties) {
-        var popupContent = '<strong>Call Sign:</strong> ' + feature.properties.call + '<br>' +
-                           '<strong>Grid:</strong> ' + feature.properties.grid;
-        layer.bindPopup(popupContent);
-      }
-    }
-
-    L.geoJSON(geojson, {
-      onEachFeature: onEachFeature,
-      pointToLayer: function (feature, latlng) {
-        return L.marker(latlng);
-      }
-    }).addTo(map);
-  });
-</script>

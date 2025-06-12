@@ -4,6 +4,7 @@ use Mojolicious::Lite;
 use DBI;
 use POSIX 'strftime';
 use Digest::SHA qw(sha256_hex);
+use Ham::Locator;
 use Text::CSV;
 use Mojo::JSON;
 
@@ -400,5 +401,36 @@ post '/import/adif' => sub {
   close $fh;
   $c->redirect_to('/');
 };
+
+get '/qso_map' => sub {
+  my $c = shift;
+
+  # Example: fetch from database
+  my $qsos = $c->db->selectall_arrayref(
+    'SELECT call, grid, date, frequency, mode FROM log WHERE grid IS NOT NULL',
+    { Slice => {} }
+  );
+
+  # Convert grid locators to lat/lon
+  my @qso_data;
+  for my $qso (@$qsos) {
+    my ($lat, $lon) = eval { Ham::Locator::loc2latlong($qso->{grid}) };
+    next unless defined $lat && defined $lon;
+
+    push @qso_data, {
+      call      => $qso->{call},
+      grid      => $qso->{grid},
+      date      => $qso->{date},
+      frequency => $qso->{frequency},
+      mode      => $qso->{mode},
+      lat       => $lat,
+      lon       => $lon,
+    };
+  }
+
+  $c->stash(qso_data => \@qso_data);
+  $c->render(template => 'qso_map');
+};
+
 
 app->start;

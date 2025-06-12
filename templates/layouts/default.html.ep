@@ -22,7 +22,10 @@
               <a class="nav-link" href="/new">New QSO</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/map">Map</a>
+              <a class="nav-link" href="/map">Grid Map</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/qso_map">Heat Map</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="/stats">Stats</a>
