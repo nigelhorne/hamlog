@@ -66,9 +66,56 @@
   const tableBody = document.getElementById('log-body');
   let dragging, startIndex;
 
-  // Load saved sort state from localStorage
-  let savedSort = localStorage.getItem('logSort');
+  // Load saved column order and sort state from localStorage
+  const savedOrder = localStorage.getItem('logColumnOrder');
+  const savedSort = localStorage.getItem('logSort');
   let currentSort = savedSort ? JSON.parse(savedSort) : { field: null, asc: true };
+
+  function saveColumnOrder() {
+    const order = [...headerRow.children]
+      .map(th => th.getAttribute('data-field'))
+      .filter(Boolean);
+    localStorage.setItem('logColumnOrder', JSON.stringify(order));
+  }
+
+  function loadColumnOrder() {
+    if (!savedOrder) return;
+    const order = JSON.parse(savedOrder);
+
+    // Map current th elements by data-field
+    const columns = {};
+    [...headerRow.children].forEach(th => {
+      const field = th.getAttribute('data-field');
+      if (field) columns[field] = th;
+    });
+
+    // Reorder headers
+    headerRow.innerHTML = '';
+    order.forEach(f => {
+      if (columns[f]) headerRow.appendChild(columns[f]);
+    });
+    // Append any leftover columns not in saved order (like Actions)
+    Object.values(columns).forEach(th => {
+      if (!order.includes(th.getAttribute('data-field'))) {
+        headerRow.appendChild(th);
+      }
+    });
+
+    // Reorder table body cells accordingly
+    [...tableBody.children].forEach(row => {
+      const cells = {};
+      [...row.children].forEach(td => {
+        const field = td.getAttribute('data-field');
+        if (field) cells[field] = td;
+      });
+      const actions = row.querySelector('td:not([data-field])');
+      row.innerHTML = '';
+      order.forEach(f => {
+        if (cells[f]) row.appendChild(cells[f]);
+      });
+      if (actions) row.appendChild(actions);
+    });
+  }
 
   // Drag and Drop Columns
   headerRow.addEventListener('dragstart', e => {
@@ -84,7 +131,7 @@
     if (overIndex >= 0) {
       headerRow.insertBefore(dragging, overIndex > startIndex ? over.nextSibling : over);
       updateBodyColumns();
-      // Optionally: save column order here
+      saveColumnOrder();
     }
   });
 
@@ -144,6 +191,13 @@
     if (!th.hasAttribute('data-field')) return;
     th.style.userSelect = 'none';
 
+    // Add sort indicator span if missing
+    if (!th.querySelector('.sort-indicator')) {
+      const span = document.createElement('span');
+      span.className = 'sort-indicator';
+      th.appendChild(span);
+    }
+
     th.addEventListener('click', () => {
       const field = th.getAttribute('data-field');
       if (currentSort.field === field) {
@@ -168,7 +222,8 @@
     }
   }
 
-  // Initial load - update body columns and apply saved sorting
+  // Initial load
+  loadColumnOrder();
   updateBodyColumns();
   if (currentSort.field) {
     sortTable(currentSort.field, currentSort.asc);
