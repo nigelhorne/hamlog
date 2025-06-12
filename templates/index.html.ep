@@ -1,0 +1,37 @@
+% layout 'default';
+% title 'Ham Log';
+<h1>Amateur Radio Log Book</h1>
+
+<p>
+  <a href="/new">Add New QSO</a> |
+  <a href="/export.csv" download>Download CSV</a>
+</p>
+
+<table border="1" cellpadding="4" cellspacing="0">
+  <thead>
+    <tr>
+      <th>Date</th><th>Time</th><th>Call</th><th>Freq</th><th>Mode</th>
+      <th>RST Sent</th><th>RST Recv</th><th>Grid</th>
+      <th>QSL Sent</th><th>QSL Recv</th><th>Notes</th><th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+  % for my $row (@$log) {
+    <tr>
+      <td><%= $row->{date} %></td>
+      <td><%= $row->{time} %></td>
+      <td><%= $row->{call} %></td>
+      <td><%= $row->{frequency} %></td>
+      <td><%= $row->{mode} %></td>
+      <td><%= $row->{rst_sent} %></td>
+      <td><%= $row->{rst_recv} %></td>
+      <td><%= $row->{grid} %></td>
+      <td><%= $row->{qsl_sent} %></td>
+      <td><%= $row->{qsl_recv} %></td>
+      <td><%= $row->{notes} %></td>
+      <td><a href="/edit/<%= $row->{id} %>">Edit</a></td>
+    </tr>
+  % }
+  </tbody>
+</table>
+

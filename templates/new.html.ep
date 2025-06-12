@@ -1,0 +1,19 @@
+% layout 'default';
+% title 'Add QSO';
+<h1>Add New QSO</h1>
+
+<form method="post" action="/new">
+  <p>Call: <input type="text" name="call" required></p>
+  <p>Date: <input type="date" name="date" required></p>
+  <p>Time: <input type="time" name="time" required></p>
+  <p>Frequency: <input type="text" name="frequency"></p>
+  <p>Mode: <input type="text" name="mode"></p>
+  <p>RST Sent: <input type="text" name="rst_sent"></p>
+  <p>RST Recv: <input type="text" name="rst_recv"></p>
+  <p>Grid: <input type="text" name="grid"></p>
+  <p>QSL Sent: <input type="text" name="qsl_sent"></p>
+  <p>QSL Recv: <input type="text" name="qsl_recv"></p>
+  <p>Notes:<br><textarea name="notes" rows="4" cols="40"></textarea></p>
+  <p><button type="submit">Save</button></p>
+</form>
+<p><a href="/">Back to Log</a></p>

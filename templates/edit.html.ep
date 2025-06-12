@@ -1,0 +1,24 @@
+% layout 'default';
+% title 'Edit QSO';
+<h1>Edit QSO for <%= $entry->{call} %></h1>
+
+<form method="post" action="/edit/<%= $entry->{id} %>">
+  <p>Call: <input type="text" name="call" value="<%= $entry->{call} %>" required></p>
+  <p>Date: <input type="date" name="date" value="<%= $entry->{date} %>" required></p>
+  <p>Time: <input type="time" name="time" value="<%= $entry->{time} %>" required></p>
+  <p>Frequency: <input type="text" name="frequency" value="<%= $entry->{frequency} // '' %>"></p>
+  <p>Mode: <input type="text" name="mode" value="<%= $entry->{mode} // '' %>"></p>
+  <p>RST Sent: <input type="text" name="rst_sent" value="<%= $entry->{rst_sent} // '' %>"></p>
+  <p>RST Recv: <input type="text" name="rst_recv" value="<%= $entry->{rst_recv} // '' %>"></p>
+  <p>Grid: <input type="text" name="grid" value="<%= $entry->{grid} // '' %>"></p>
+  <p>QSL Sent: <input type="text" name="qsl_sent" value="<%= $entry->{qsl_sent} // '' %>"></p>
+  <p>QSL Recv: <input type="text" name="qsl_recv" value="<%= $entry->{qsl_recv} // '' %>"></p>
+  <p>Notes:<br><textarea name="notes" rows="4" cols="40"><%= $entry->{notes} // '' %></textarea></p>
+  <p><button type="submit">Save Changes</button></p>
+</form>
+
+<form method="post" action="/delete/<%= $entry->{id} %>" onsubmit="return confirm('Are you sure you want to delete this QSO?');">
+  <button type="submit">Delete QSO</button>
+</form>
+
+<p><a href="/">Back to Log</a></p>
