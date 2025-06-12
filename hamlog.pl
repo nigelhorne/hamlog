@@ -162,6 +162,15 @@ get '/' => sub {
 
   my $rows = $c->db->selectall_arrayref($sql, { Slice => {} }, @bind);
   $c->stash(log => $rows);
+  $c->stash(
+  log     => $rows,
+  filters => {
+    call      => $p->param('call'),
+    mode      => $p->param('mode'),
+    from_date => $p->param('from_date'),
+    to_date   => $p->param('to_date'),
+  }
+);
   $c->render(template => 'index');
 };
 
