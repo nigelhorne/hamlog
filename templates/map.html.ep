@@ -1,0 +1,30 @@
+% layout 'default';
+% title 'QSO Grid Map';
+<h1>QSO Grid Map</h1>
+
+% if (@$features) {
+  <div id="map" style="height: 600px;"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-pH6Cgt5tcptbE1eSeQWAa0WxFzKN3D1dnuPJ1p3pHPg="
+    crossorigin=""></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+e2JbVJWgSAH4PDZ9b4VvBT4l2E6i2m13v1F6CUbw="
+    crossorigin=""/>
+
+  <script>
+    var map = L.map('map').setView([40, -95], 3);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    var features = <%= json $features %>;
+
+    features.forEach(function(f) {
+      var marker = L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]]).addTo(map);
+      marker.bindPopup("Call: " + f.properties.call + "<br>Grid: " + f.properties.grid);
+    });
+  </script>
+% } else {
+  <p>No valid grid data found in the log.</p>
+% }

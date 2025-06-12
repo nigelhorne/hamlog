@@ -4,7 +4,6 @@ use DBI;
 use POSIX 'strftime';
 use Text::CSV;
 use IO::File;
-use HTML::OSM;
 
 # DB setup
 my $dbfile = "hamlog.db";
@@ -80,6 +79,20 @@ get '/map' => sub {
   }
   $c->stash(features => \@features);
   $c->render(template => 'map');
+};
+
+get '/stats' => sub {
+  my $c = shift;
+  my $summary = $c->db->selectall_arrayref(
+    "SELECT mode, COUNT(*) AS count FROM log GROUP BY mode ORDER BY count DESC",
+    { Slice => {} }
+  );
+  my $bands = $c->db->selectall_arrayref(
+    "SELECT frequency, COUNT(*) AS count FROM log GROUP BY frequency ORDER BY count DESC",
+    { Slice => {} }
+  );
+  $c->stash(stats_modes => $summary, stats_bands => $bands);
+  $c->render(template => 'stats');
 };
 
 sub grid_to_latlon {

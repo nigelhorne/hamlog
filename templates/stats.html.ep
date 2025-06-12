@@ -1,0 +1,61 @@
+% layout 'default';
+% title 'QSO Statistics';
+<h1>QSO Statistics</h1>
+
+<canvas id="modeChart" width="400" height="200"></canvas>
+<canvas id="bandChart" width="400" height="200"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const modeData = {
+    labels: <%= json [ map { $_->{mode} } @$stats_modes ] %>,
+    datasets: [{
+      label: 'QSOs per Mode',
+      data: <%= json [ map { $_->{count} } @$stats_modes ] %>,
+      backgroundColor: 'rgba(54, 162, 235, 0.6)',
+      borderColor: 'rgba(54, 162, 235, 1)',
+      borderWidth: 1
+    }]
+  };
+
+  const bandData = {
+    labels: <%= json [ map { $_->{frequency} } @$stats_bands ] %>,
+    datasets: [{
+      label: 'QSOs per Frequency',
+      data: <%= json [ map { $_->{count} } @$stats_bands ] %>,
+      backgroundColor: 'rgba(255, 206, 86, 0.6)',
+      borderColor: 'rgba(255, 206, 86, 1)',
+      borderWidth: 1
+    }]
+  };
+
+  new Chart(document.getElementById('modeChart'), {
+    type: 'bar',
+    data: modeData,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'QSOs by Mode' }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('bandChart'), {
+    type: 'bar',
+    data: bandData,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'QSOs by Frequency' }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
