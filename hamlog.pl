@@ -125,4 +125,27 @@ get '/export.csv' => sub {
   $c->render(data => $csv);
 };
 
+get '/export.adif' => sub {
+  my $c = shift;
+  my $rows = $c->db->selectall_arrayref("SELECT * FROM log ORDER BY date DESC, time DESC", { Slice => {} });
+  my $adif = "<ADIF_VER:5>3.1.0\n<EOR>\n";
+  for my $r (@$rows) {
+    $adif .= sprintf("<CALL:%d>%s<DATE:%d>%s<TIME:%d>%s<FREQ:%d>%s<MODE:%d>%s<RSTS:%d>%s<RSTR:%d>%s<GRIDSQUARE:%d>%s<QSL_SENT:%d>%s<QSL_RCVD:%d>%s<COMMENT:%d>%s<EOR>\n",
+      length($r->{call} // ''), $r->{call} // '',
+      length($r->{date} // ''), $r->{date} // '',
+      length($r->{time} // ''), $r->{time} // '',
+      length($r->{frequency} // ''), $r->{frequency} // '',
+      length($r->{mode} // ''), $r->{mode} // '',
+      length($r->{rst_sent} // ''), $r->{rst_sent} // '',
+      length($r->{rst_recv} // ''), $r->{rst_recv} // '',
+      length($r->{grid} // ''), $r->{grid} // '',
+      length($r->{qsl_sent} // ''), $r->{qsl_sent} // '',
+      length($r->{qsl_recv} // ''), $r->{qsl_recv} // '',
+      length($r->{notes} // ''), $r->{notes} // '');
+  }
+  $c->res->headers->content_type('application/text');
+  $c->res->headers->content_disposition('attachment; filename=logbook.adi');
+  $c->render(data => $adif);
+};
+
 app->start;
