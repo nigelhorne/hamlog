@@ -1,10 +1,11 @@
 #!/usr/bin/env perl
+
 use Mojolicious::Lite;
 use DBI;
 
 # DB setup
-my $dbfile = "hamlog.db";
-my $dbh = DBI->connect("dbi:SQLite:dbname=$dbfile", "", "", { RaiseError => 1, AutoCommit => 1 });
+my $dbfile = 'hamlog.db';
+my $dbh = DBI->connect("dbi:SQLite:dbname=$dbfile", '', '', { RaiseError => 1, AutoCommit => 1 });
 
 $dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS log (
@@ -81,7 +82,7 @@ get '/export.csv' => sub {
   my $rows = $c->db->selectall_arrayref("SELECT * FROM log ORDER BY date DESC, time DESC", { Slice => {} });
   my $csv = "id,call,date,time,frequency,mode,rst_sent,rst_recv,grid,qsl_sent,qsl_recv,notes\n";
   for my $r (@$rows) {
-    $csv .= join(",", map { my $v = $_ // ''; $v =~ s/"/""/g; $v =~ s/\R/ /g; '"' . $v . '"' } @$r{qw(id call date time frequency mode rst_sent rst_recv grid qsl_sent qsl_recv notes)}) . "\n";
+    $csv .= join(",", map { my $v = $_ // ''; $v =~ s/"/''/g; $v =~ s/\R/ /g; '"' . $v . '"' } @$r{qw(id call date time frequency mode rst_sent rst_recv grid qsl_sent qsl_recv notes)}) . "\n";
   }
   $c->res->headers->content_type('text/csv');
   $c->render(data => $csv);
