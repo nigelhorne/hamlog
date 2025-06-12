@@ -36,7 +36,10 @@
 %  ['QSL S', 'qsl_sent'], ['QSL R', 'qsl_recv'], ['Notes', 'notes']
 %);
 % for my $col (@columns) {
-      <th draggable="true" data-field="<%= $col->[1] %>"><%= $col->[0] %></th>
+      <th draggable="true" data-field="<%= $col->[1] %>" style="cursor:pointer">
+        <%= $col->[0] %>
+        <span class="sort-indicator"></span>
+      </th>
 % }
       <th>Actions</th>
     </tr>
@@ -63,6 +66,7 @@
   const tableBody = document.getElementById('log-body');
   let dragging, startIndex;
 
+  // Drag and Drop Columns
   headerRow.addEventListener('dragstart', e => {
     dragging = e.target;
     startIndex = [...headerRow.children].indexOf(dragging);
@@ -96,4 +100,65 @@
       if (actions) row.appendChild(actions);
     });
   }
+
+  // Sorting logic
+  let currentSort = { field: null, asc: true };
+
+  function clearSortIndicators() {
+    [...headerRow.children].forEach(th => {
+      const span = th.querySelector('.sort-indicator');
+      if (span) span.textContent = '';
+    });
+  }
+
+  function sortTable(field, asc) {
+    const rowsArray = Array.from(tableBody.querySelectorAll('tr'));
+
+    rowsArray.sort((a, b) => {
+      const aCell = a.querySelector(`td[data-field="${field}"]`);
+      const bCell = b.querySelector(`td[data-field="${field}"]`);
+      let aVal = aCell ? aCell.textContent.trim() : '';
+      let bVal = bCell ? bCell.textContent.trim() : '';
+
+      // Try to parse as numbers, fallback to strings
+      const aNum = parseFloat(aVal.replace(/[^0-9.\-]/g, ''));
+      const bNum = parseFloat(bVal.replace(/[^0-9.\-]/g, ''));
+
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        aVal = aNum;
+        bVal = bNum;
+      }
+
+      if (aVal < bVal) return asc ? -1 : 1;
+      if (aVal > bVal) return asc ? 1 : -1;
+      return 0;
+    });
+
+    // Reattach rows in sorted order
+    rowsArray.forEach(row => tableBody.appendChild(row));
+  }
+
+  // Add click handlers for sorting on each draggable header (except Actions)
+  [...headerRow.children].forEach(th => {
+    if (!th.hasAttribute('data-field')) return;
+    th.style.userSelect = 'none';
+
+    th.addEventListener('click', () => {
+      const field = th.getAttribute('data-field');
+      if (currentSort.field === field) {
+        currentSort.asc = !currentSort.asc; // Toggle sort direction
+      } else {
+        currentSort.field = field;
+        currentSort.asc = true; // Default ascending
+      }
+      clearSortIndicators();
+      th.querySelector('.sort-indicator').textContent = currentSort.asc ? ' ▲' : ' ▼';
+      sortTable(currentSort.field, currentSort.asc);
+    });
+  });
+
+  // Initial load - update body columns and load saved column order if any
+  updateBodyColumns();
+
+  // Optionally, load and save column order from localStorage here as before
 </script>
