@@ -2,6 +2,8 @@
 use Mojolicious::Lite;
 use DBI;
 use POSIX 'strftime';
+use Text::CSV;
+use IO::File;
 
 # DB setup
 my $dbfile = "hamlog.db";
@@ -146,6 +148,29 @@ get '/export.adif' => sub {
   $c->res->headers->content_type('application/text');
   $c->res->headers->content_disposition('attachment; filename=logbook.adi');
   $c->render(data => $adif);
+};
+
+post '/import.csv' => sub {
+  my $c = shift;
+  my $upload = $c->req->upload('csv_file');
+  return $c->render(text => 'No file uploaded') unless $upload;
+
+  my $csv = Text::CSV->new({ binary => 1 }) or die "Cannot use CSV: " . Text::CSV->error_diag();
+  my $fh = $upload->asset->handle;
+
+  # Skip header
+  <$fh>;
+
+  while (my $row = $csv->getline($fh)) {
+    my ($id, $call, $date, $time, $frequency, $mode, $rst_sent, $rst_recv, $grid, $qsl_sent, $qsl_recv, $notes) = @$row;
+    $call = uc($call // '');
+    $call =~ s/^\s+|\s+$//g;
+    $c->db->do("INSERT INTO log (call, date, time, frequency, mode, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      undef,
+      $call, $date, $time, $frequency, $mode, $rst_sent, $rst_recv, $grid, $qsl_sent, $qsl_recv, $notes);
+  }
+  $c->redirect_to('/');
 };
 
 app->start;
