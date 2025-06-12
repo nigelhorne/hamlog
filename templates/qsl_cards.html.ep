@@ -1,0 +1,32 @@
+% layout 'default';
+% title 'Generate QSL Cards';
+
+<h1>Generate QSL Cards</h1>
+
+<form method="post" action="/generate_qsl_pdf">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Select</th>
+        <th>Call</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Frequency</th>
+        <th>Mode</th>
+      </tr>
+    </thead>
+    <tbody>
+% for my $entry (@$log) {
+      <tr>
+        <td><input type="checkbox" name="ids" value="<%= $entry->{id} %>"></td>
+        <td><%= $entry->{call} %></td>
+        <td><%= $entry->{date} %></td>
+        <td><%= $entry->{time} %></td>
+        <td><%= $entry->{frequency} %></td>
+        <td><%= $entry->{mode} %></td>
+      </tr>
+% }
+    </tbody>
+  </table>
+  <button type="submit" class="btn btn-primary">Generate PDF</button>
+</form>

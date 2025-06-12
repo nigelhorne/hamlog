@@ -316,6 +316,9 @@ post '/new' => sub {
   my $call = uc($p->param('call') // '');
   $call =~ s/^\s+|\s+$//g;
 
+	# my $dxcc = $dxcc_lookup->prefix_to_country($call) // 'Unknown';
+	# Add this into the entry
+
   $c->db->do("INSERT INTO log (call, date, time, frequency, mode, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes, user_id)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     undef,
@@ -401,6 +404,39 @@ post '/import/adif' => sub {
   }
   close $fh;
   $c->redirect_to('/');
+};
+
+get '/qsl_cards' => sub {
+  my $c = shift;
+
+  my $log = $c->db->selectall_arrayref('SELECT * FROM log ORDER BY date DESC', { Slice => {} });
+
+  $c->stash(log => $log);
+  $c->render(template => 'qsl_cards');
+};
+
+post '/generate_qsl_pdf' => sub {
+  my $c = shift;
+  my $ids = $c->every_param('ids');
+
+  my $placeholders = join(",", ("?") x @$ids);
+  my $qsos = $c->db->selectall_arrayref(
+    "SELECT * FROM log WHERE id IN ($placeholders)", { Slice => {} }, @$ids
+  );
+
+  my $pdf = Mojo::PDF->new;
+  for my $qso (@$qsos) {
+    $pdf->page->text->font('Helvetica', 12)->translate(50, 750)->text("QSL Card for $qso->{call}");
+    $pdf->text->translate(50, 730)->text("Date: $qso->{date} Time: $qso->{time}");
+    $pdf->text->translate(50, 710)->text("Freq: $qso->{frequency} Mode: $qso->{mode}");
+    $pdf->text->translate(50, 690)->text("RST Sent: $qso->{rst_sent} RST Rcvd: $qso->{rst_recv}");
+    $pdf->text->translate(50, 670)->text("Grid: $qso->{grid} DXCC: $qso->{dxcc} Notes: $qso->{notes}");
+    $pdf->text->translate(50, 640)->text("------------------------------------------------------------");
+  }
+
+  $c->res->headers->content_type('application/pdf');
+  $c->res->headers->content_disposition('attachment; filename="qsl_cards.pdf"');
+  $c->render(data => $pdf->to_string);
 };
 
 get '/qso_map' => sub {
