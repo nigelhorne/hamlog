@@ -30,7 +30,11 @@
 <table id="log-table" class="table table-striped table-sm">
   <thead>
     <tr id="column-headers">
-% my @columns = ( ['Date', 'date'], ['Time', 'time'], ['Call', 'call'], ['Freq', 'frequency'], ['Mode', 'mode'], ['RST S', 'rst_sent'], ['RST R', 'rst_recv'], ['Grid', 'grid'], ['QSL S', 'qsl_sent'], ['QSL R', 'qsl_recv'], ['Notes', 'notes']);
+% my @columns = (
+%  ['Date', 'date'], ['Time', 'time'], ['Call', 'call'], ['Freq', 'frequency'],
+%  ['Mode', 'mode'], ['RST S', 'rst_sent'], ['RST R', 'rst_recv'], ['Grid', 'grid'],
+%  ['QSL S', 'qsl_sent'], ['QSL R', 'qsl_recv'], ['Notes', 'notes']
+%);
 % for my $col (@columns) {
       <th draggable="true" data-field="<%= $col->[1] %>"><%= $col->[0] %></th>
 % }
