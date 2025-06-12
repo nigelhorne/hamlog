@@ -66,6 +66,10 @@
   const tableBody = document.getElementById('log-body');
   let dragging, startIndex;
 
+  // Load saved sort state from localStorage
+  let savedSort = localStorage.getItem('logSort');
+  let currentSort = savedSort ? JSON.parse(savedSort) : { field: null, asc: true };
+
   // Drag and Drop Columns
   headerRow.addEventListener('dragstart', e => {
     dragging = e.target;
@@ -80,6 +84,7 @@
     if (overIndex >= 0) {
       headerRow.insertBefore(dragging, overIndex > startIndex ? over.nextSibling : over);
       updateBodyColumns();
+      // Optionally: save column order here
     }
   });
 
@@ -100,9 +105,6 @@
       if (actions) row.appendChild(actions);
     });
   }
-
-  // Sorting logic
-  let currentSort = { field: null, asc: true };
 
   function clearSortIndicators() {
     [...headerRow.children].forEach(th => {
@@ -134,7 +136,6 @@
       return 0;
     });
 
-    // Reattach rows in sorted order
     rowsArray.forEach(row => tableBody.appendChild(row));
   }
 
@@ -154,11 +155,23 @@
       clearSortIndicators();
       th.querySelector('.sort-indicator').textContent = currentSort.asc ? ' ▲' : ' ▼';
       sortTable(currentSort.field, currentSort.asc);
+      localStorage.setItem('logSort', JSON.stringify(currentSort));
     });
   });
 
-  // Initial load - update body columns and load saved column order if any
-  updateBodyColumns();
+  function applySortIndicator() {
+    if (!currentSort.field) return;
+    clearSortIndicators();
+    const th = [...headerRow.children].find(th => th.getAttribute('data-field') === currentSort.field);
+    if (th) {
+      th.querySelector('.sort-indicator').textContent = currentSort.asc ? ' ▲' : ' ▼';
+    }
+  }
 
-  // Optionally, load and save column order from localStorage here as before
+  // Initial load - update body columns and apply saved sorting
+  updateBodyColumns();
+  if (currentSort.field) {
+    sortTable(currentSort.field, currentSort.asc);
+    applySortIndicator();
+  }
 </script>
