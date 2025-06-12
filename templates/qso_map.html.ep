@@ -57,9 +57,8 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-const gridSquares = <%= json stash('grid_data') %>;
-const dxccEntities = <%= json stash('dxcc_data') %>;
-    
+    const gridSquares = <%= json $grid_data %>;
+    const dxccEntities = <%= json $dxcc_data %>;
 
     gridSquares.forEach(({ lat, lon, worked }) => {
       const color = worked ? 'green' : 'gray';
@@ -75,13 +74,15 @@ const dxccEntities = <%= json stash('dxcc_data') %>;
     });
 
     dxccEntities.forEach(({ name, lat, lon, confirmed }) => {
-      const marker = L.circleMarker([lat, lon], {
-        radius: 6,
-        color: confirmed ? 'blue' : 'red',
-        fillOpacity: 0.6
-      });
-      marker.bindPopup(name + (confirmed ? ' (Confirmed)' : ' (Unconfirmed)'));
-      marker.addTo(map);
+      if (lat != null && lon != null) {
+        const marker = L.circleMarker([lat, lon], {
+          radius: 6,
+          color: confirmed ? 'blue' : 'red',
+          fillOpacity: 0.6
+        });
+        marker.bindPopup(name + (confirmed ? ' (Confirmed)' : ' (Unconfirmed)'));
+        marker.addTo(map);
+      }
     });
 
     document.getElementById('filter-form').addEventListener('submit', e => {
@@ -100,4 +101,3 @@ const dxccEntities = <%= json stash('dxcc_data') %>;
     });
   });
 </script>
-
