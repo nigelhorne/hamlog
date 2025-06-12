@@ -5,6 +5,9 @@ use POSIX 'strftime';
 use Digest::SHA qw(sha256_hex);
 use Mojo::JSON;
 
+# Enable sessions
+app->secrets(['Password123']);  # change to a strong secret in production
+
 # DB setup
 my $dbfile = "hamlog.db";
 my $dbh = DBI->connect("dbi:SQLite:dbname=$dbfile", "", "", { RaiseError => 1, AutoCommit => 1 });
@@ -122,7 +125,7 @@ post '/login' => sub {
 # Logout route
 get '/logout' => sub {
   my $c = shift;
-  $c->session(expires => 1);
+  $c->session(expires => 1);  # expire session
   $c->redirect_to('/login');
 };
 
@@ -237,5 +240,6 @@ post '/new' => sub {
   );
   $c->redirect_to('/');
 };
+
 
 app->start;
