@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="stylesheet" href="/css/style.css">
   <title><%= title %></title>
   <style>
     body { font-family: sans-serif; margin: 2em; }

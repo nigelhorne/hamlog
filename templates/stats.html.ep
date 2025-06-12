@@ -3,76 +3,67 @@
 
 <h1>QSO Statistics</h1>
 
-<h2>QSOs by Mode (Bar Chart)</h2>
-<canvas id="modeBar" width="400" height="200"></canvas>
+<h2>QSOs by Mode</h2>
+<canvas id="modesChart" width="600" height="400"></canvas>
 
-<h2>QSOs by Band (Pie Chart)</h2>
-<canvas id="bandPie" width="400" height="200"></canvas>
-
-<h2>QSOs Over Time (Monthly, Line Chart)</h2>
-<canvas id="timeLine" width="600" height="300"></canvas>
+<h2>QSOs by Frequency Band</h2>
+<canvas id="bandsChart" width="600" height="400"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-  // Modes Bar Chart
-  const modeData = {
-    labels: <%= json [ map { $_->{mode} } @$stats_modes ] %>,
+  const modesData = {
+    labels: [<%= join(", ", map { "'". $_->{mode} ."'" } @{ stash('stats_modes') }) %>],
     datasets: [{
-      label: 'QSOs per Mode',
-      data: <%= json [ map { $_->{count} } @$stats_modes ] %>,
-      backgroundColor: 'rgba(54, 162, 235, 0.6)',
+      label: 'QSOs',
+      data: [<%= join(", ", map { $_->{count} } @{ stash('stats_modes') }) %>],
+      backgroundColor: 'rgba(54, 162, 235, 0.7)',
       borderColor: 'rgba(54, 162, 235, 1)',
       borderWidth: 1
     }]
   };
-  new Chart(document.getElementById('modeBar'), {
+
+  const bandsData = {
+    labels: [<%= join(", ", map { "'". $_->{frequency} ."'" } @{ stash('stats_bands') }) %>],
+    datasets: [{
+      label: 'QSOs',
+      data: [<%= join(", ", map { $_->{count} } @{ stash('stats_bands') }) %>],
+      backgroundColor: 'rgba(255, 99, 132, 0.7)',
+      borderColor: 'rgba(255, 99, 132, 1)',
+      borderWidth: 1
+    }]
+  };
+
+  const configModes = {
     type: 'bar',
-    data: modeData,
+    data: modesData,
     options: {
-      responsive: true,
-      plugins: { legend: { display: false }, title: { display: true, text: 'QSOs by Mode' } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-
-  // Bands Pie Chart
-  const bandData = {
-    labels: <%= json [ map { $_->{band} } @$stats_bands ] %>,
-    datasets: [{
-      label: 'QSOs per Band',
-      data: <%= json [ map { $_->{count} } @$stats_bands ] %>,
-      backgroundColor: [
-        '#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF'
-      ]
-    }]
-  };
-  new Chart(document.getElementById('bandPie'), {
-    type: 'pie',
-    data: bandData,
-    options: { responsive: true, plugins: { title: { display: true, text: 'QSOs by Band' } } }
-  });
-
-  // QSOs over time Line Chart
-  const timeData = {
-    labels: <%= json [ map { $_->{month} } @$stats_dates ] %>,
-    datasets: [{
-      label: 'QSOs per Month',
-      data: <%= json [ map { $_->{count} } @$stats_dates ] %>,
-      fill: false,
-      borderColor: 'rgba(75, 192, 192, 1)',
-      tension: 0.1
-    }]
-  };
-  new Chart(document.getElementById('timeLine'), {
-    type: 'line',
-    data: timeData,
-    options: {
-      responsive: true,
-      plugins: { title: { display: true, text: 'QSOs Over Time (Monthly)' } },
       scales: {
-        x: { title: { display: true, text: 'Month' } },
-        y: { beginAtZero: true, title: { display: true, text: 'QSOs' } }
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
       }
     }
-  });
+  };
+
+  const configBands = {
+    type: 'bar',
+    data: bandsData,
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
+      }
+    }
+  };
+
+  window.onload = function () {
+    const ctxModes = document.getElementById('modesChart').getContext('2d');
+    const ctxBands = document.getElementById('bandsChart').getContext('2d');
+    new Chart(ctxModes, configModes);
+    new Chart(ctxBands, configBands);
+  };
 </script>

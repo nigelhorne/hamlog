@@ -1,37 +1,80 @@
 % layout 'default';
-% title 'Ham Log';
+% title 'Amateur Radio Log Book';
+
 <h1>Amateur Radio Log Book</h1>
+
+<form method="GET" action="/">
+  <fieldset>
+    <legend>Filter QSOs</legend>
+
+    <label for="call">Call Sign:</label>
+    <input type="text" id="call" name="call" value="<%= param('call') // '' %>">
+
+    <label for="mode">Mode:</label>
+    <select id="mode" name="mode">
+      <option value="">-- Any --</option>
+      % my @modes = ('CW', 'SSB', 'FM', 'AM', 'RTTY', 'FT8', 'JT65', 'Other');
+      % for my $mode (@modes) {
+        <option value="<%= $mode %>" <%= (param('mode') // '') eq $mode ? 'selected' : '' %>><%= $mode %></option>
+      % }
+    </select>
+
+    <label for="from_date">From Date:</label>
+    <input type="date" id="from_date" name="from_date" value="<%= param('from_date') // '' %>">
+
+    <label for="to_date">To Date:</label>
+    <input type="date" id="to_date" name="to_date" value="<%= param('to_date') // '' %>">
+
+    <button type="submit">Filter</button>
+    <a href="/">Clear</a>
+  </fieldset>
+</form>
 
 <p>
   <a href="/new">Add New QSO</a> |
-  <a href="/export.csv" download>Download CSV</a>
+  <a href="/map">View Map</a> |
+  <a href="/stats">View Stats</a> |
+  <a href="/export.csv">Export CSV</a>
 </p>
 
-<table border="1" cellpadding="4" cellspacing="0">
+<table border="1" cellpadding="5" cellspacing="0">
   <thead>
     <tr>
-      <th>Date</th><th>Time</th><th>Call</th><th>Freq</th><th>Mode</th>
-      <th>RST Sent</th><th>RST Recv</th><th>Grid</th>
-      <th>QSL Sent</th><th>QSL Recv</th><th>Notes</th><th>Action</th>
+      <th>Date</th>
+      <th>Time</th>
+      <th>Call Sign</th>
+      <th>Frequency</th>
+      <th>Mode</th>
+      <th>RST Sent</th>
+      <th>RST Recv</th>
+      <th>Grid</th>
+      <th>QSL Sent</th>
+      <th>QSL Recv</th>
+      <th>Notes</th>
     </tr>
   </thead>
   <tbody>
-  % for my $row (@$log) {
-    <tr>
-      <td><%= $row->{date} %></td>
-      <td><%= $row->{time} %></td>
-      <td><%= $row->{call} %></td>
-      <td><%= $row->{frequency} %></td>
-      <td><%= $row->{mode} %></td>
-      <td><%= $row->{rst_sent} %></td>
-      <td><%= $row->{rst_recv} %></td>
-      <td><%= $row->{grid} %></td>
-      <td><%= $row->{qsl_sent} %></td>
-      <td><%= $row->{qsl_recv} %></td>
-      <td><%= $row->{notes} %></td>
-      <td><a href="/edit/<%= $row->{id} %>">Edit</a></td>
-    </tr>
-  % }
+    % if (stash('log') && @{stash('log')}) {
+      % for my $qso (@{stash('log')}) {
+        <tr>
+          <td><%= $qso->{date} %></td>
+          <td><%= $qso->{time} %></td>
+          <td><%= $qso->{call} %></td>
+          <td><%= $qso->{frequency} %></td>
+          <td><%= $qso->{mode} %></td>
+          <td><%= $qso->{rst_sent} %></td>
+          <td><%= $qso->{rst_recv} %></td>
+          <td><%= $qso->{grid} %></td>
+          <td><%= $qso->{qsl_sent} %></td>
+          <td><%= $qso->{qsl_recv} %></td>
+          <td><%= $qso->{notes} %></td>
+        </tr>
+      % }
+    % }
+    % else {
+      <tr>
+        <td colspan="11" style="text-align:center;">No QSOs found.</td>
+      </tr>
+    % }
   </tbody>
 </table>
-

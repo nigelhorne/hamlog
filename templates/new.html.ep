@@ -1,19 +1,60 @@
 % layout 'default';
-% title 'Add QSO';
+% title 'Add New QSO';
+
 <h1>Add New QSO</h1>
 
-<form method="post" action="/new">
-  <p>Call: <input type="text" name="call" required></p>
-  <p>Date: <input type="date" name="date" required></p>
-  <p>Time: <input type="time" name="time" required></p>
-  <p>Frequency: <input type="text" name="frequency"></p>
-  <p>Mode: <input type="text" name="mode"></p>
-  <p>RST Sent: <input type="text" name="rst_sent"></p>
-  <p>RST Recv: <input type="text" name="rst_recv"></p>
-  <p>Grid: <input type="text" name="grid"></p>
-  <p>QSL Sent: <input type="text" name="qsl_sent"></p>
-  <p>QSL Recv: <input type="text" name="qsl_recv"></p>
-  <p>Notes:<br><textarea name="notes" rows="4" cols="40"></textarea></p>
-  <p><button type="submit">Save</button></p>
+<form method="POST" action="/new">
+  <fieldset>
+    <legend>QSO Details</legend>
+
+    <label for="call">Call Sign:</label>
+    <input type="text" id="call" name="call" required maxlength="15" autofocus>
+
+    <label for="date">Date (YYYY-MM-DD):</label>
+    <input type="date" id="date" name="date" value="<%= stash('now_date') %>" required>
+
+    <label for="time">Time (HH:MM UTC):</label>
+    <input type="time" id="time" name="time" value="<%= stash('now_time') %>" required>
+
+    <label for="frequency">Frequency (MHz):</label>
+    <input type="text" id="frequency" name="frequency" placeholder="e.g. 14.070" pattern="^\d+(\.\d+)?$">
+
+    <label for="mode">Mode:</label>
+    <select id="mode" name="mode" required>
+      % my @modes = ('CW', 'SSB', 'FM', 'AM', 'RTTY', 'FT8', 'JT65', 'Other');
+      % for my $mode (@modes) {
+        <option value="<%= $mode %>"><%= $mode %></option>
+      % }
+    </select>
+
+    <label for="rst_sent">RST Sent:</label>
+    <input type="text" id="rst_sent" name="rst_sent" maxlength="3" placeholder="e.g. 59">
+
+    <label for="rst_recv">RST Received:</label>
+    <input type="text" id="rst_recv" name="rst_recv" maxlength="3" placeholder="e.g. 59">
+
+    <label for="grid">Grid Square:</label>
+    <input type="text" id="grid" name="grid" maxlength="6" placeholder="e.g. FN31pr">
+
+    <label for="qsl_sent">QSL Sent:</label>
+    <select id="qsl_sent" name="qsl_sent">
+      <option value="">--</option>
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
+
+    <label for="qsl_recv">QSL Received:</label>
+    <select id="qsl_recv" name="qsl_recv">
+      <option value="">--</option>
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
+
+    <label for="notes">Notes:</label>
+    <textarea id="notes" name="notes" rows="4" cols="40" placeholder="Additional info or comments"></textarea>
+
+    <br><br>
+    <button type="submit">Add QSO</button>
+    <a href="/">Cancel</a>
+  </fieldset>
 </form>
-<p><a href="/">Back to Log</a></p>
