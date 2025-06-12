@@ -36,10 +36,7 @@
 %  ['QSL S', 'qsl_sent'], ['QSL R', 'qsl_recv'], ['Notes', 'notes']
 %);
 % for my $col (@columns) {
-      <th draggable="true" data-field="<%= $col->[1] %>" style="cursor:pointer">
-        <%= $col->[0] %>
-        <span class="sort-indicator"></span>
-      </th>
+      <th draggable="true" data-field="<%= $col->[1] %>"><%= $col->[0] %></th>
 % }
       <th>Actions</th>
     </tr>
