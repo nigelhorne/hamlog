@@ -1,40 +1,103 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>QSO Map View</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    #qso-map { height: 600px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Logged QSO Map</h1>
+% layout 'default';
+% title 'QSO Map View';
 
-    <div id="qso-map"></div>
-  </div>
+<h1>Worked Grid / DXCC Heatmap</h1>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    const qsoMap = L.map('qso-map').setView([20, 0], 2);
+<div class="control-panel mb-3">
+  <form id="filter-form" class="row row-cols-auto g-2 align-items-end">
+    <div class="col">
+      <label for="band" class="form-label">Band:</label>
+      <select id="band" name="band" class="form-select">
+        <option value="">All</option>
+        <option value="160m">160m</option>
+        <option value="80m">80m</option>
+        <option value="40m">40m</option>
+        <option value="20m">20m</option>
+        <option value="15m">15m</option>
+        <option value="10m">10m</option>
+      </select>
+    </div>
+    <div class="col">
+      <label for="mode" class="form-label">Mode:</label>
+      <select id="mode" name="mode" class="form-select">
+        <option value="">All</option>
+        <option value="SSB">SSB</option>
+        <option value="CW">CW</option>
+        <option value="FT8">FT8</option>
+        <option value="RTTY">RTTY</option>
+      </select>
+    </div>
+    <div class="col">
+      <label for="from" class="form-label">From:</label>
+      <input type="date" id="from" name="from" class="form-control">
+    </div>
+    <div class="col">
+      <label for="to" class="form-label">To:</label>
+      <input type="date" id="to" name="to" class="form-control">
+    </div>
+    <div class="col">
+      <button type="submit" class="btn btn-primary">Apply Filters</button>
+    </div>
+    <div class="col">
+      <button type="button" id="export-btn" class="btn btn-secondary">Export Map</button>
+    </div>
+  </form>
+</div>
+
+<div id="map" style="width: 100%; height: 600px;"></div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-image/0.4.0/leaflet-image.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const map = L.map('map').setView([20, 0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
-    }).addTo(qsoMap);
+    }).addTo(map);
 
-    const qsoPoints = <%= json $qso_data %>;
+const gridSquares = <%= json stash('grid_data') %>;
+const dxccEntities = <%= json stash('dxcc_data') %>;
+    
 
-    qsoPoints.forEach(qso => {
-      const marker = L.marker([qso.lat, qso.lon]).addTo(qsoMap);
-      marker.bindPopup(`
-        <strong>Callsign:</strong> ${qso.call}<br>
-        <strong>Grid:</strong> ${qso.grid}<br>
-        <strong>Date:</strong> ${qso.date}<br>
-        <strong>Freq:</strong> ${qso.frequency} MHz<br>
-        <strong>Mode:</strong> ${qso.mode}<br>
-      `);
+    gridSquares.forEach(({ lat, lon, worked }) => {
+      const color = worked ? 'green' : 'gray';
+      const rect = L.rectangle([
+        [lat, lon],
+        [lat + 1, lon + 2]
+      ], {
+        color: color,
+        weight: 1,
+        fillOpacity: 0.4
+      });
+      rect.addTo(map);
     });
-  </script>
-</body>
-</html>
+
+    dxccEntities.forEach(({ name, lat, lon, confirmed }) => {
+      const marker = L.circleMarker([lat, lon], {
+        radius: 6,
+        color: confirmed ? 'blue' : 'red',
+        fillOpacity: 0.6
+      });
+      marker.bindPopup(name + (confirmed ? ' (Confirmed)' : ' (Unconfirmed)'));
+      marker.addTo(map);
+    });
+
+    document.getElementById('filter-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const params = new URLSearchParams(new FormData(e.target));
+      window.location.href = '/qso_map?' + params.toString();
+    });
+
+    document.getElementById('export-btn').addEventListener('click', () => {
+      leafletImage(map, function(err, canvas) {
+        const img = document.createElement('img');
+        img.src = canvas.toDataURL();
+        const w = window.open();
+        w.document.write('<img src="' + img.src + '" />');
+      });
+    });
+  });
+</script>
+

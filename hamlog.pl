@@ -45,6 +45,7 @@ CREATE TABLE log (
   grid       TEXT,
   qsl_sent   TEXT,
   qsl_recv   TEXT,
+  dxcc		TEXT,
   notes      TEXT,
   user_id    INTEGER,
   FOREIGN KEY(user_id) REFERENCES users(id)
@@ -405,31 +406,98 @@ post '/import/adif' => sub {
 get '/qso_map' => sub {
   my $c = shift;
 
-  # Example: fetch from database
-  my $qsos = $c->db->selectall_arrayref(
-    'SELECT call, grid, date, frequency, mode FROM log WHERE grid IS NOT NULL',
-    { Slice => {} }
+  # Optional filtering parameters from query string
+  my $band = $c->param('band');
+  my $mode = $c->param('mode');
+  my $from = $c->param('from');
+  my $to   = $c->param('to');
+
+  # Build SQL query with optional filters
+  my @conditions;
+  my @params;
+
+  push @conditions, 'band = ?'   if $band;
+  push @params,     $band        if $band;
+
+  push @conditions, 'mode = ?'   if $mode;
+  push @params,     $mode        if $mode;
+
+  push @conditions, 'date >= ?'  if $from;
+  push @params,     $from        if $from;
+
+  push @conditions, 'date <= ?'  if $to;
+  push @params,     $to          if $to;
+
+  my $where = @conditions ? 'WHERE ' . join(' AND ', @conditions) : '';
+
+  my $log = $c->db->selectall_arrayref(
+    "SELECT call, grid, dxcc, date FROM log $where",
+    { Slice => {} },
+    @params
   );
 
-  # Convert grid locators to lat/lon
-  my @qso_data;
-  for my $qso (@$qsos) {
-    my ($lat, $lon) = eval { Ham::Locator::loc2latlong($qso->{grid}) };
-    next unless defined $lat && defined $lon;
+  # Build grid data (dummy location generation for example)
+  my %grids;
+  for my $entry (@$log) {
+    next unless $entry->{grid};
+    my ($lat, $lon) = _maidenhead_to_latlon($entry->{grid});
+    $grids{"$lat,$lon"} = { lat => $lat, lon => $lon, worked => 1 };
+  }
 
-    push @qso_data, {
-      call      => $qso->{call},
-      grid      => $qso->{grid},
-      date      => $qso->{date},
-      frequency => $qso->{frequency},
-      mode      => $qso->{mode},
-      lat       => $lat,
-      lon       => $lon,
+  my @grid_data = values %grids;
+
+  # Build DXCC data (dummy confirmed status logic)
+  my %dxcc;
+  for my $entry (@$log) {
+    next unless $entry->{dxcc};
+    my $name = $entry->{dxcc};
+    $dxcc{$name} ||= {
+      name => $name,
+      lat  => 0 + int(rand(140)) - 70,
+      lon  => 0 + int(rand(360)) - 180,
+      confirmed => int(rand(2)),
     };
   }
 
-  $c->stash(qso_data => \@qso_data);
+  my @dxcc_data = values %dxcc;
+
+  $c->stash(grid_data => \@grid_data, dxcc_data => \@dxcc_data);
   $c->render(template => 'qso_map');
+};
+
+# Convert Maidenhead grid square to approximate lat/lon
+sub _maidenhead_to_latlon {
+  my $grid = shift;
+  return (0, 0) unless $grid =~ /^[A-R]{2}\d{2}/i;
+
+  my $A = ord('A');
+  my $a = ord('a');
+
+  my $lon = (ord(uc(substr($grid, 0, 1))) - $A) * 20 - 180;
+  my $lat = (ord(uc(substr($grid, 1, 1))) - $A) * 10 - 90;
+  $lon += substr($grid, 2, 1) * 2;
+  $lat += substr($grid, 3, 1) * 1;
+  return ($lat, $lon);
+};
+
+get '/calendar' => sub {
+  my $c = shift;
+
+  my $log_entries = $c->db->selectall_arrayref(
+    'SELECT date, COUNT(*) as count FROM log GROUP BY date ORDER BY date',
+    { Slice => {} }
+  );
+
+  my @events = map {
+    {
+      title => "$_->{count} QSOs",
+      start => $_->{date}
+    }
+  } @$log_entries;
+
+$c->stash(include_fullcalendar => 1);
+  $c->stash(events => \@events);
+  $c->render(template => 'calendar');
 };
 
 
