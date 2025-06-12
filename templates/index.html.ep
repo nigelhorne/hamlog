@@ -1,65 +1,95 @@
 % layout 'default';
-% title 'Amateur Radio Logbook';
+% title 'Logbook';
 
-<h2>Amateur Radio Logbook</h2>
+<h1>Ham Logbook</h1>
 
-<form method="get" class="row row-cols-lg-auto g-3 align-items-end mb-4">
-  <div class="col">
-    <label class="form-label" for="call">Call Sign</label>
-    <input class="form-control" type="text" name="call" id="call" value="<%= $filters->{call} // '' %>">
-  </div>
-  <div class="col">
-    <label class="form-label" for="mode">Mode</label>
-    <input class="form-control" type="text" name="mode" id="mode" value="<%= $filters->{mode} // '' %>">
-  </div>
-  <div class="col">
-    <label class="form-label" for="from_date">From</label>
-    <input class="form-control" type="date" name="from_date" id="from_date" value="<%= $filters->{from_date} // '' %>">
-  </div>
-  <div class="col">
-    <label class="form-label" for="to_date">To</label>
-    <input class="form-control" type="date" name="to_date" id="to_date" value="<%= $filters->{to_date} // '' %>">
-  </div>
-  <div class="col">
-    <button class="btn btn-primary" type="submit">Filter</button>
+<a href="/new" class="btn btn-primary mb-3">New QSO</a>
+<a href="/import" class="btn btn-secondary mb-3">Import</a>
+<a href="/export" class="btn btn-secondary mb-3">Export</a>
+
+<form method="get" class="mb-3">
+  <div class="row g-2">
+    <div class="col">
+      <input type="text" name="call" value="<%= stash('filters')->{call} // '' %>" placeholder="Callsign" class="form-control">
+    </div>
+    <div class="col">
+      <input type="text" name="mode" value="<%= stash('filters')->{mode} // '' %>" placeholder="Mode" class="form-control">
+    </div>
+    <div class="col">
+      <input type="date" name="from_date" value="<%= stash('filters')->{from_date} // '' %>" class="form-control">
+    </div>
+    <div class="col">
+      <input type="date" name="to_date" value="<%= stash('filters')->{to_date} // '' %>" class="form-control">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">Filter</button>
+    </div>
   </div>
 </form>
 
-<div class="mb-3">
-	<a href="/new" class="btn btn-success mb-3">Add QSO</a>
-	<a href="/import" class="btn btn-info mb-3">Import</a>
-	<a href="/export" class="btn btn-secondary mb-3">Export</a>
-	<a href="/map" class="btn btn-warning mb-3">View Map</a>
-	<a href="/stats" class="btn btn-dark mb-3">Statistics</a>
-</div>
-
-<table class="table table-striped table-bordered">
+<table id="log-table" class="table table-striped table-sm">
   <thead>
-    <tr>
-      <th>Date</th><th>Time</th><th>Call</th><th>Freq</th><th>Mode</th><th>RST S</th><th>RST R</th><th>Grid</th><th>QSL S</th><th>QSL R</th><th>Notes</th><th>Actions</th>
+    <tr id="column-headers">
+% my @columns = ( ['Date', 'date'], ['Time', 'time'], ['Call', 'call'], ['Freq', 'frequency'], ['Mode', 'mode'], ['RST S', 'rst_sent'], ['RST R', 'rst_recv'], ['Grid', 'grid'], ['QSL S', 'qsl_sent'], ['QSL R', 'qsl_recv'], ['Notes', 'notes']);
+% for my $col (@columns) {
+      <th draggable="true" data-field="<%= $col->[1] %>"><%= $col->[0] %></th>
+% }
+      <th>Actions</th>
     </tr>
   </thead>
-  <tbody>
-    % for my $entry (@$log) {
-      <tr>
-        <td><%= $entry->{date} %></td>
-        <td><%= $entry->{time} %></td>
-        <td><%= $entry->{call} %></td>
-        <td><%= $entry->{frequency} %></td>
-        <td><%= $entry->{mode} %></td>
-        <td><%= $entry->{rst_sent} %></td>
-        <td><%= $entry->{rst_recv} %></td>
-        <td><%= $entry->{grid} %></td>
-        <td><%= $entry->{qsl_sent} %></td>
-        <td><%= $entry->{qsl_recv} %></td>
-        <td><%= $entry->{notes} %></td>
-        <td>
-          <form method="post" action="/delete/<%= $entry->{id} %>" style="display:inline">
-            <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this entry?')">Delete</button>
-          </form>
-          <a class="btn btn-sm btn-secondary" href="/undo/<%= $entry->{id} %>">Undo</a>
-        </td>
-      </tr>
-    % }
+  <tbody id="log-body">
+% for my $entry (@$log) {
+    <tr>
+%   for my $col (@columns) {
+      <td data-field="<%= $col->[1] %>"><%= $entry->{$col->[1]} // '' %></td>
+%   }
+      <td>
+        <form method="post" action="/delete/<%= $entry->{id} %>" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this entry?');">
+          <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+        </form>
+        <a href="/undo/<%= $entry->{id} %>" class="btn btn-sm btn-secondary">Undo</a>
+      </td>
+    </tr>
+% }
   </tbody>
 </table>
+
+<script>
+  const headerRow = document.getElementById('column-headers');
+  const tableBody = document.getElementById('log-body');
+  let dragging, startIndex;
+
+  headerRow.addEventListener('dragstart', e => {
+    dragging = e.target;
+    startIndex = [...headerRow.children].indexOf(dragging);
+  });
+
+  headerRow.addEventListener('dragover', e => {
+    e.preventDefault();
+    const over = e.target.closest('th');
+    if (!over || over === dragging) return;
+    const overIndex = [...headerRow.children].indexOf(over);
+    if (overIndex >= 0) {
+      headerRow.insertBefore(dragging, overIndex > startIndex ? over.nextSibling : over);
+      updateBodyColumns();
+    }
+  });
+
+  function updateBodyColumns() {
+    const order = [...headerRow.children].map(th => th.getAttribute('data-field'));
+    [...tableBody.children].forEach(row => {
+      const cells = {};
+      [...row.children].forEach(td => {
+        const field = td.getAttribute('data-field');
+        if (field) cells[field] = td;
+      });
+      row.innerHTML = '';
+      order.forEach(field => {
+        if (cells[field]) row.appendChild(cells[field]);
+      });
+      // Append Actions cell
+      const actions = row.querySelector('td:not([data-field])');
+      if (actions) row.appendChild(actions);
+    });
+  }
+</script>
