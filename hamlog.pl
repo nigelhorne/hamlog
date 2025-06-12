@@ -51,6 +51,24 @@ CREATE TABLE log (
 SQL
 }
 
+$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS deleted_log (
+  id         INTEGER,
+  call       TEXT,
+  date       TEXT,
+  time       TEXT,
+  frequency  TEXT,
+  mode       TEXT,
+  rst_sent   TEXT,
+  rst_recv   TEXT,
+  grid       TEXT,
+  qsl_sent   TEXT,
+  qsl_recv   TEXT,
+  notes      TEXT,
+  deleted_at TEXT
+)
+SQL
+
 helper db => sub { $dbh };
 
 # JSON helper for templates
@@ -307,9 +325,30 @@ post '/new' => sub {
 };
 
 post '/delete/:id' => sub {
-  my $c  = shift;
-  my $id = $c->param('id');
-  $c->db->do("DELETE FROM log WHERE id = ?", undef, $id);
+  my $c = shift;
+  my $id = $c->stash('id');
+
+  my $entry = $c->db->selectrow_hashref("SELECT * FROM log WHERE id = ?", undef, $id);
+  if ($entry) {
+    $c->db->do("INSERT INTO deleted_log (id, call, date, time, frequency, mode, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes, deleted_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      undef, @$entry{qw/id call date time frequency mode rst_sent rst_recv grid qsl_sent qsl_recv notes/}, strftime('%Y-%m-%d %H:%M:%S', localtime));
+    $c->db->do("DELETE FROM log WHERE id = ?", undef, $id);
+  }
+  $c->redirect_to('/');
+};
+
+get '/undo/:id' => sub {
+  my $c = shift;
+  my $id = $c->stash('id');
+
+  my $entry = $c->db->selectrow_hashref("SELECT * FROM deleted_log WHERE id = ? ORDER BY deleted_at DESC LIMIT 1", undef, $id);
+  if ($entry) {
+    $c->db->do("INSERT INTO log (id, call, date, time, frequency, mode, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      undef, @$entry{qw/id call date time frequency mode rst_sent rst_recv grid qsl_sent qsl_recv notes/});
+    $c->db->do("DELETE FROM deleted_log WHERE id = ? AND deleted_at = ?", undef, $id, $entry->{deleted_at});
+  }
   $c->redirect_to('/');
 };
 
