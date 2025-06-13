@@ -88,7 +88,7 @@ hamlog/
 │   └── layouts/default.html.ep
 ├── public/
 │   └── uploads/logo.jpg       # Your station logo
-├── logbook.db                 # SQLite database
+├── hamlog.db                 # SQLite database
 └── README.md
 ```
 
@@ -104,16 +104,6 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🧩 Roadmap Ideas
-
-* ADIF import/export
-* Award tracking (e.g. WAS, DXCC progress)
-* User authentication
-* Remote QTH mapping
-* QSL bureau mailing labels
-
----
-
 ## 🤝 Contributing
 
 Pull requests are welcome! For major changes, please open an issue first.
@@ -123,7 +113,3 @@ Pull requests are welcome! For major changes, please open an issue first.
 ## 🛡 License
 
 GPL2 © 2025 Nigel Horne
-
-```
-
----

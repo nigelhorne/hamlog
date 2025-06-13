@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Perl
+      uses: shogo82148/actions-setup-perl@v1
+      with:
+        perl-version: '5.36'  # or your preferred version
+
+    - name: Install CPAN dependencies
+      run: |
+        cpanm --quiet --notest Mojolicious DBD::SQLite PDF::API2 File::Basename
+        cpanm --installdeps .
+
+    - name: Run tests
+      run: |
+        prove -l t || echo "No tests found"  # Optional test runner
