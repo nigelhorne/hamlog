@@ -1,0 +1,22 @@
+% layout 'default';
+% title 'Upload Logo';
+
+<h1>Upload Custom Logo</h1>
+
+% if (flash 'message') {
+  <div class="alert alert-info"><%= flash 'message' %></div>
+% }
+
+<form method="POST" action="/upload_logo" enctype="multipart/form-data" class="mb-3">
+  <div class="mb-3">
+    <label for="logo" class="form-label">Choose Logo (PNG/JPG/GIF):</label>
+    <input type="file" name="logo" accept="image/*" class="form-control" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Upload</button>
+</form>
+
+% my $logo_path = '/uploads/logo.png';
+% if (-e app->home->rel_file('public' . $logo_path)) {
+  <h3>Current Logo Preview:</h3>
+  <img src="<%= $logo_path %>?<%= time %>" alt="Uploaded Logo" style="max-height: 150px;">
+% }

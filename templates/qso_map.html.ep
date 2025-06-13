@@ -57,8 +57,8 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    const gridSquares = <%= json $grid_data %>;
-    const dxccEntities = <%= json $dxcc_data %>;
+    const gridSquares = <%= json stash('grid_data') || [] %>;
+    const dxccEntities = <%= json stash('dxcc_data') || [] %>;
 
     gridSquares.forEach(({ lat, lon, worked }) => {
       const color = worked ? 'green' : 'gray';

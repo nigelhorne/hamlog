@@ -46,6 +46,7 @@
             <li class="nav-item">
 		<a class="nav-link" href="/qsl_cards">QSL Cards</a>
             </li>
+	    <li class="nav-item"><a href="/upload_logo" class="nav-link">Upload Logo</a></li>
           </ul>
           %= include 'partials/login_status'
         </div>
