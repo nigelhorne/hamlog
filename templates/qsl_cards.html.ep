@@ -24,6 +24,7 @@
         <td><%= $entry->{time} %></td>
         <td><%= $entry->{frequency} %></td>
         <td><%= $entry->{mode} %></td>
+        <td><%= $entry->{power} %></td>
       </tr>
 % }
     </tbody>

@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/env morbo
 
 use Mojolicious::Lite;
 use DBI;
@@ -41,6 +41,7 @@ CREATE TABLE log (
   time       TEXT,
   frequency  TEXT,
   mode       TEXT,
+  power	TEXT,
   rst_sent   TEXT,
   rst_recv   TEXT,
   grid       TEXT,
@@ -62,6 +63,7 @@ CREATE TABLE IF NOT EXISTS deleted_log (
   time       TEXT,
   frequency  TEXT,
   mode       TEXT,
+  power	TEXT,
   rst_sent   TEXT,
   rst_recv   TEXT,
   grid       TEXT,
@@ -208,11 +210,11 @@ get '/export/csv' => sub {
   my $output = '';
   open my $fh, '>', \$output;
 
-  $csv->print($fh, [qw/date time call frequency mode rst_sent rst_recv grid qsl_sent qsl_recv notes/]);
+  $csv->print($fh, [qw/date time call frequency mode power rst_sent rst_recv grid qsl_sent qsl_recv notes/]);
   print $fh "\n";
 
   for my $row (@$rows) {
-    $csv->print($fh, [ @{$row}{qw/date time call frequency mode rst_sent rst_recv grid qsl_sent qsl_recv notes/} ]);
+    $csv->print($fh, [ @{$row}{qw/date time call frequency mode power rst_sent rst_recv grid qsl_sent qsl_recv notes/} ]);
     print $fh "\n";
   }
   close $fh;
@@ -235,6 +237,7 @@ get '/export/adif' => sub {
       length($row->{call}), $row->{call},
       length($row->{frequency}), $row->{frequency},
       length($row->{mode}), $row->{mode},
+      length($row->{power}), $row->{power},
       length($row->{rst_sent}), $row->{rst_sent},
       length($row->{rst_recv}), $row->{rst_recv},
       length($row->{grid} // ''), $row->{grid} // '',
@@ -320,11 +323,11 @@ post '/new' => sub {
 	# my $dxcc = $dxcc_lookup->prefix_to_country($call) // 'Unknown';
 	# Add this into the entry
 
-  $c->db->do("INSERT INTO log (call, date, time, frequency, mode, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes, user_id)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  $c->db->do("INSERT INTO log (call, date, time, frequency, mode, power, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes, user_id)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     undef,
     $call, $p->param('date'), $p->param('time'), $p->param('frequency'), $p->param('mode'),
-    $p->param('rst_sent'), $p->param('rst_recv'), $p->param('grid'),
+    $p->('power'), $p->param('rst_sent'), $p->param('rst_recv'), $p->param('grid'),
     $p->param('qsl_sent'), $p->param('qsl_recv'), $p->param('notes'), $user_id
   );
   $c->redirect_to('/');
@@ -336,9 +339,9 @@ post '/delete/:id' => sub {
 
   my $entry = $c->db->selectrow_hashref("SELECT * FROM log WHERE id = ?", undef, $id);
   if ($entry) {
-    $c->db->do("INSERT INTO deleted_log (id, call, date, time, frequency, mode, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes, deleted_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      undef, @$entry{qw/id call date time frequency mode rst_sent rst_recv grid qsl_sent qsl_recv notes/}, strftime('%Y-%m-%d %H:%M:%S', localtime));
+    $c->db->do("INSERT INTO deleted_log (id, call, date, time, frequency, mode, power, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes, deleted_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      undef, @$entry{qw/id call date time frequency mode power rst_sent rst_recv grid qsl_sent qsl_recv notes/}, strftime('%Y-%m-%d %H:%M:%S', localtime));
     $c->db->do("DELETE FROM log WHERE id = ?", undef, $id);
   }
   $c->redirect_to('/');
@@ -350,9 +353,9 @@ get '/undo/:id' => sub {
 
   my $entry = $c->db->selectrow_hashref("SELECT * FROM deleted_log WHERE id = ? ORDER BY deleted_at DESC LIMIT 1", undef, $id);
   if ($entry) {
-    $c->db->do("INSERT INTO log (id, call, date, time, frequency, mode, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      undef, @$entry{qw/id call date time frequency mode rst_sent rst_recv grid qsl_sent qsl_recv notes/});
+    $c->db->do("INSERT INTO log (id, call, date, time, frequency, mode, power, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      undef, @$entry{qw/id call date time frequency mode power rst_sent rst_recv grid qsl_sent qsl_recv notes/});
     $c->db->do("DELETE FROM deleted_log WHERE id = ? AND deleted_at = ?", undef, $id, $entry->{deleted_at});
   }
   $c->redirect_to('/');
@@ -376,9 +379,9 @@ post '/import/csv' => sub {
     my %data;
     @data{@$header} = @$row;
 
-    $c->db->do("INSERT INTO log (date, time, call, frequency, mode, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    $c->db->do("INSERT INTO log (date, time, call, frequency, mode, power, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       undef,
-      @data{qw/date time call frequency mode rst_sent rst_recv grid qsl_sent qsl_recv notes/}
+      @data{qw/date time call frequency mode power rst_sent rst_recv grid qsl_sent qsl_recv notes/}
     );
   }
   close $fh;
@@ -398,7 +401,7 @@ post '/import/adif' => sub {
     while ($record =~ /<(\w+):\d+>([^<]*)/g) {
       $qso{uc $1} = $2;
     }
-    $c->db->do("INSERT INTO log (date, time, call, frequency, mode, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    $c->db->do("INSERT INTO log (date, time, call, frequency, mode, power, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       undef,
       $qso{QSO_DATE}, $qso{TIME_ON}, $qso{CALL}, $qso{FREQ}, $qso{MODE}, $qso{RST_SENT}, $qso{RST_RCVD}, $qso{GRIDSQUARE}, $qso{QSL_SENT}, $qso{QSL_RCVD}, $qso{COMMENT}
     );
@@ -441,7 +444,7 @@ post '/generate_qsl_pdf' => sub {
 
     $text->translate(20, $y); $text->text("QSL Card for $qso->{call}");
     $text->translate(20, $y -= 15); $text->text("Date: $qso->{date}  Time: $qso->{time}");
-    $text->translate(20, $y -= 15); $text->text("Freq: $qso->{frequency}  Mode: $qso->{mode}");
+    $text->translate(20, $y -= 15); $text->text("Freq: $qso->{frequency}  Power: $qso->{power} Mode: $qso->{mode}");
     $text->translate(20, $y -= 15); $text->text("RST Sent: $qso->{rst_sent}  Rcvd: $qso->{rst_recv}");
     $text->translate(20, $y -= 15); $text->text("Grid: $qso->{grid}  DXCC: $qso->{dxcc}");
     $text->translate(20, $y -= 15); $text->text("Notes: $qso->{notes}");

@@ -8,6 +8,7 @@
   <p>Time: <input type="time" name="time" value="<%= $entry->{time} %>" required></p>
   <p>Frequency: <input type="text" name="frequency" value="<%= $entry->{frequency} // '' %>"></p>
   <p>Mode: <input type="text" name="mode" value="<%= $entry->{mode} // '' %>"></p>
+  <p>Power: <input type="text" name="power" value="<%= $entry->{power} // '' %>"></p>
   <p>RST Sent: <input type="text" name="rst_sent" value="<%= $entry->{rst_sent} // '' %>"></p>
   <p>RST Recv: <input type="text" name="rst_recv" value="<%= $entry->{rst_recv} // '' %>"></p>
   <p>Grid: <input type="text" name="grid" value="<%= $entry->{grid} // '' %>"></p>

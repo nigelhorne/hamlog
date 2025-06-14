@@ -27,6 +27,9 @@
       % }
     </select>
 
+    <label for="power">Power (W):</label>
+    <input type="text" id="power" name="power" placeholder="e.g. 100" pattern="^\d+(\.\d+)?$">
+
     <label for="rst_sent">RST Sent:</label>
     <input type="text" id="rst_sent" name="rst_sent" maxlength="3" placeholder="e.g. 59">
 

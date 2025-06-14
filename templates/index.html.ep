@@ -16,6 +16,9 @@
       <input type="text" name="mode" value="<%= stash('filters')->{mode} // '' %>" placeholder="Mode" class="form-control">
     </div>
     <div class="col">
+      <input type="text" name="power" value="<%= stash('filters')->{power} // '' %>" placeholder="Power" class="form-control">
+    </div>
+    <div class="col">
       <input type="date" name="from_date" value="<%= stash('filters')->{from_date} // '' %>" class="form-control">
     </div>
     <div class="col">
@@ -32,7 +35,7 @@
     <tr id="column-headers">
 % my @columns = (
 %  ['Date', 'date'], ['Time', 'time'], ['Call', 'call'], ['Freq', 'frequency'],
-%  ['Mode', 'mode'], ['RST S', 'rst_sent'], ['RST R', 'rst_recv'], ['Grid', 'grid'],
+%  ['Mode', 'mode'], ['Power', 'power'], ['RST S', 'rst_sent'], ['RST R', 'rst_recv'], ['Grid', 'grid'],
 %  ['QSL S', 'qsl_sent'], ['QSL R', 'qsl_recv'], ['Notes', 'notes']
 %);
 % for my $col (@columns) {
