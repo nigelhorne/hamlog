@@ -317,37 +317,70 @@ sub grid_to_latlon {
   return ($lat, $lon);
 }
 
+# GET new
 get '/new' => sub {
   my $c = shift;
   my $now = strftime("%Y-%m-%d", localtime);
   my $time = strftime("%H:%M", localtime);
-    $c->stash(
-    now_date => $now,
-    now_time => $time,
-    entry    => {},   # template has a hashref
-    is_edit  => 0,    # indicate it’s a new entry
-  );
+  $c->stash(now_date => $now, now_time => $time, is_edit => 0, entry => {});
   $c->render(template => 'new');
 };
 
+# POST new
 post '/new' => sub {
-	my $c = shift;
-	my $p = $c->req->body_params;
-
+  my $c = shift;
+  my $p = $c->req->params;
   my $user_id = $c->session('user_id');
-  my $call = uc($p->param('call') // '');
-  $call =~ s/^\s+|\s+$//g;
-
-	# my $dxcc = $dxcc_lookup->prefix_to_country($call) // 'Unknown';
-	# Add this into the entry
 
   $c->db->do("INSERT INTO log (call, date, time, frequency, mode, power, rst_sent, rst_recv, grid, qsl_sent, qsl_recv, notes, user_id)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     undef,
-    $call, $p->param('date'), $p->param('time'), $p->param('frequency'), $p->param('mode'),
+    $p->param('call'), $p->param('date'), $p->param('time'), $p->param('frequency'), $p->param('mode'),
     $p->param('power') // '', $p->param('rst_sent'), $p->param('rst_recv'), $p->param('grid'),
     $p->param('qsl_sent'), $p->param('qsl_recv'), $p->param('notes'), $user_id
   );
+
+  $c->redirect_to('/');
+};
+
+# GET edit
+get '/edit/:id' => sub {
+  my $c  = shift;
+  my $id = $c->param('id');
+  my $user_id = $c->session('user_id');
+
+  my $entry = $c->db->selectrow_hashref(
+    'SELECT * FROM log WHERE id = ? AND user_id = ?',
+    undef,
+    $id, $user_id
+  ) or return $c->reply->not_found;
+
+  $c->stash(entry => $entry, is_edit => 1);
+  $c->render(template => 'new');
+};
+
+# POST edit
+post '/edit/:id' => sub {
+  my $c  = shift;
+  my $id = $c->param('id');
+  my $p  = $c->req->params;
+  my $user_id = $c->session('user_id');
+
+  $c->db->do(
+    q{
+      UPDATE log SET
+        call = ?, date = ?, time = ?, frequency = ?, mode = ?, power = ?,
+        rst_sent = ?, rst_recv = ?, grid = ?, qsl_sent = ?, qsl_recv = ?, notes = ?
+      WHERE id = ? AND user_id = ?
+    },
+    undef,
+    $p->param('call'), $p->param('date'), $p->param('time'), $p->param('frequency'), $p->param('mode'),
+    $p->param('power') // '', $p->param('rst_sent'), $p->param('rst_recv'), $p->param('grid'),
+    $p->param('qsl_sent'), $p->param('qsl_recv'), $p->param('notes'),
+    $id, $user_id
+  );
+
+  $c->flash(message => 'QSO updated');
   $c->redirect_to('/');
 };
 
@@ -376,49 +409,6 @@ get '/undo/:id' => sub {
       undef, @$entry{qw/id call date time frequency mode power rst_sent rst_recv grid qsl_sent qsl_recv notes/});
     $c->db->do("DELETE FROM deleted_log WHERE id = ? AND deleted_at = ?", undef, $id, $entry->{deleted_at});
   }
-  $c->redirect_to('/');
-};
-
-get '/edit/:id' => sub {
-  my $c  = shift;
-  my $id = $c->param('id');
-  my $user_id = $c->session('user_id');
-
-  my $entry = $c->db->selectrow_hashref(
-    'SELECT * FROM log WHERE id = ? AND user_id = ?',
-    undef,
-    $id, $user_id
-  ) or return $c->reply->not_found;
-
-  $c->stash(
-    entry   => $entry,
-    is_edit => 1,
-  );
-
-  $c->render(template => 'new');  # reuse form
-};
-
-
-post '/edit/:id' => sub {
-  my $c  = shift;
-  my $id = $c->param('id');
-  my $p  = $c->req->params->to_hash;
-  my $user_id = $c->session('user_id');   # <-- use session
-
-  $c->db->do(
-    q{
-      UPDATE log SET
-        call = ?, date = ?, time = ?, frequency = ?, mode = ?, power = ?,
-        rst_sent = ?, rst_recv = ?, grid = ?, qsl_sent = ?, qsl_recv = ?, notes = ?
-      WHERE id = ? AND user_id = ?
-    },
-    undef,
-    map { $p->{$_} }
-      qw(call date time frequency mode power rst_sent rst_recv grid qsl_sent qsl_recv notes),
-    $id, $user_id
-  );
-
-  $c->flash(message => 'QSO updated');
   $c->redirect_to('/');
 };
 
