@@ -636,7 +636,7 @@ post '/upload_logo' => sub {
     $c->flash(message => 'Please upload a valid image.');
   }
 
-  $c->redirect_to('/upload_logo');
+	$c->redirect_to('/upload_logo');
 };
 
-app->start;
+app->start();

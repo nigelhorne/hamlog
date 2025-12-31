@@ -6,122 +6,72 @@
 <h1><%= $is_edit ? 'Edit QSO' : 'Add New QSO' %></h1>
 
 <form method="post" action="<%= $is_edit ? '/edit/' . $entry->{id} : '/new' %>">
-  <fieldset>
-    <legend>QSO Details</legend>
+	<fieldset>
+		<legend>QSO Details</legend>
 
-    <div class="row mb-3">
-      <div class="col-md-2">
-        <label for="date">Date:</label>
-      </div>
-      <div class="col-md-4">
-        <input type="date" id="date" name="date"
-               value="<%= $entry->{date} // stash('now_date') // '' %>" class="form-control" required>
-      </div>
+    <!-- Flex row for alignment -->
+    <div class="d-flex flex-wrap align-items-center mb-3">
+      <label for="date" class="me-2" style="width: 100px;">Date:</label>
+      <input type="date" id="date" name="date" value="<%= $entry->{date} // stash('now_date') // '' %>" class="form-control me-4" style="width:150px;" required>
 
-      <div class="col-md-2">
-        <label for="time">Time:</label>
-      </div>
-      <div class="col-md-4">
-        <input type="time" id="time" name="time"
-               value="<%= $entry->{time} // stash('now_time') // '' %>" class="form-control" required>
-      </div>
+      <label for="time" class="me-2" style="width: 100px;">Time:</label>
+      <input type="time" id="time" name="time" value="<%= $entry->{time} // stash('now_time') // '' %>" class="form-control" style="width:150px;" required>
     </div>
 
-    <div class="row mb-3">
-      <div class="col-md-2">
-        <label for="call">Call:</label>
-      </div>
-      <div class="col-md-4">
-        <input type="text" id="call" name="call" value="<%= $entry->{call} // '' %>" class="form-control" required>
-      </div>
+    <div class="d-flex flex-wrap align-items-center mb-3">
+      <label for="call" class="me-2" style="width: 100px;">Call:</label>
+      <input type="text" id="call" name="call" value="<%= $entry->{call} // '' %>" class="form-control me-4" style="width:150px;" required>
 
-      <div class="col-md-2">
-        <label for="frequency">Frequency:</label>
-      </div>
-      <div class="col-md-4">
-        <input type="text" id="frequency" name="frequency" value="<%= $entry->{frequency} // '' %>" class="form-control" required>
-      </div>
+      <label for="frequency" class="me-2" style="width: 100px;">Frequency:</label>
+      <input type="text" id="frequency" name="frequency" value="<%= $entry->{frequency} // '' %>" class="form-control" style="width:150px;" required>
     </div>
 
-    <div class="row mb-3">
-      <div class="col-md-2">
-        <label for="mode">Mode:</label>
-      </div>
-      <div class="col-md-4">
-        <select id="mode" name="mode" class="form-control" required>
-          % my @modes = ('CW', 'SSB', 'FM', 'AM', 'RTTY', 'FT8', 'JT65', 'Other');
-          % for my $mode (@modes) {
-            <option value="<%= $mode %>" <%= ($entry->{mode} // '') eq $mode ? 'selected' : '' %>><%= $mode %></option>
-          % }
-        </select>
-      </div>
+    <div class="d-flex flex-wrap align-items-center mb-3">
+      <label for="mode" class="me-2" style="width: 100px;">Mode:</label>
+      <select id="mode" name="mode" class="form-control me-4" style="width:150px;" required>
+        % my @modes = ('CW', 'SSB', 'FM', 'AM', 'RTTY', 'FT8', 'JT65', 'Other');
+        % for my $mode (@modes) {
+          <option value="<%= $mode %>" <%= ($entry->{mode} // '') eq $mode ? 'selected' : '' %>><%= $mode %></option>
+        % }
+      </select>
 
-      <div class="col-md-2">
-        <label for="power">Power (W):</label>
-      </div>
-      <div class="col-md-4">
-        <input type="text" id="power" name="power" placeholder="e.g. 100"
-               pattern="^\d+(\.\d+)?$" value="<%= $entry->{power} // '' %>" class="form-control">
-      </div>
+      <label for="power" class="me-2" style="width: 100px;">Power (W):</label>
+      <input type="text" id="power" name="power" placeholder="e.g. 100" pattern="^\d+(\.\d+)?$" value="<%= $entry->{power} // '' %>" class="form-control" style="width:150px;">
     </div>
 
-    <div class="row mb-3">
-      <div class="col-md-2">
-        <label for="rst_sent">RST Sent:</label>
-      </div>
-      <div class="col-md-4">
-        <input type="text" id="rst_sent" name="rst_sent" maxlength="3"
-               value="<%= $entry->{rst_sent} // '' %>" class="form-control">
-      </div>
+    <div class="d-flex flex-wrap align-items-center mb-3">
+      <label for="rst_sent" class="me-2" style="width: 100px;">RST Sent:</label>
+      <input type="text" id="rst_sent" name="rst_sent" maxlength="3" value="<%= $entry->{rst_sent} // '' %>" class="form-control me-4" style="width:150px;">
 
-      <div class="col-md-2">
-        <label for="rst_recv">RST Received:</label>
-      </div>
-      <div class="col-md-4">
-        <input type="text" id="rst_recv" name="rst_recv" maxlength="3"
-               value="<%= $entry->{rst_recv} // '' %>" class="form-control">
-      </div>
+      <label for="rst_recv" class="me-2" style="width: 100px;">RST Received:</label>
+      <input type="text" id="rst_recv" name="rst_recv" maxlength="3" value="<%= $entry->{rst_recv} // '' %>" class="form-control" style="width:150px;">
     </div>
 
-    <div class="row mb-3">
-      <div class="col-md-2">
-        <label for="grid">Grid:</label>
-      </div>
-      <div class="col-md-4">
-        <input type="text" id="grid" name="grid" value="<%= $entry->{grid} // '' %>" class="form-control">
-      </div>
+    <div class="d-flex flex-wrap align-items-center mb-3">
+      <label for="grid" class="me-2" style="width: 100px;">Grid:</label>
+      <input type="text" id="grid" name="grid" value="<%= $entry->{grid} // '' %>" class="form-control me-4" style="width:150px;">
+    </div>
+    <div class="d-flex flex-wrap align-items-center mb-3">
 
-      <div class="col-md-2">
-        <label for="qsl_sent">QSL Sent:</label>
-      </div>
-      <div class="col-md-4">
-        <select id="qsl_sent" name="qsl_sent" class="form-control">
-          % my @qsl_options = ('', 'Yes', 'No', 'Requested');
-          % for my $opt (@qsl_options) {
-            <option value="<%= $opt %>" <%= ($entry->{qsl_sent} // '') eq $opt ? 'selected' : '' %>><%= $opt %></option>
-          % }
-        </select>
-      </div>
+      <label for="qsl_sent" class="me-2" style="width: 100px;">QSL Sent:</label>
+      <select id="qsl_sent" name="qsl_sent" class="form-control me-4" style="width:150px;">
+        % my @qsl_options = ('', 'Yes', 'No', 'Requested');
+        % for my $opt (@qsl_options) {
+          <option value="<%= $opt %>" <%= ($entry->{qsl_sent} // '') eq $opt ? 'selected' : '' %>><%= $opt %></option>
+        % }
+      </select>
+
+      <label for="qsl_recv" class="me-2" style="width: 100px;">QSL Received:</label>
+      <select id="qsl_recv" name="qsl_recv" class="form-control" style="width:150px;">
+        % for my $opt (@qsl_options) {
+          <option value="<%= $opt %>" <%= ($entry->{qsl_recv} // '') eq $opt ? 'selected' : '' %>><%= $opt %></option>
+        % }
+      </select>
     </div>
 
-    <div class="row mb-3">
-      <div class="col-md-2">
-        <label for="qsl_recv">QSL Received:</label>
-      </div>
-      <div class="col-md-4">
-        <select id="qsl_recv" name="qsl_recv" class="form-control">
-          % for my $opt (@qsl_options) {
-            <option value="<%= $opt %>" <%= ($entry->{qsl_recv} // '') eq $opt ? 'selected' : '' %>><%= $opt %></option>
-          % }
-        </select>
-      </div>
-
-      <div class="col-md-2">
-        <label for="notes">Notes:</label>
-      </div>
-      <div class="col-md-4">
-        <textarea id="notes" name="notes" class="form-control" rows="4"><%= $entry->{notes} // '' %></textarea>
-      </div>
+    <div class="d-flex flex-wrap align-items-center mb-3">
+      <label for="notes" class="me-2" style="width: 100px;">Notes:</label>
+      <textarea id="notes" name="notes" class="form-control" rows="4" style="flex:1 1 70%;"><%= $entry->{notes} // '' %></textarea>
     </div>
 
     <div class="form-actions mt-3">
