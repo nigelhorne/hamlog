@@ -10,7 +10,7 @@ use Mojo::JSON;
 use PDF::API2;
 
 # Enable sessions
-app->secrets(['Password123']);  # change to a strong secret in production
+app->secrets(['Password123']);	# change to a strong secret in production
 
 # DB setup
 my $dbfile = 'hamlog.db';
@@ -19,9 +19,9 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=$dbfile", '', '', { RaiseError => 1, A
 # Create tables if they don't exist
 $dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY,
-  username TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL
+	id INTEGER PRIMARY KEY,
+	username TEXT UNIQUE NOT NULL,
+	password TEXT NOT NULL
 )
 SQL
 
@@ -29,7 +29,7 @@ SQL
 my $log_columns = $dbh->selectall_arrayref('PRAGMA table_info(log)');
 my $has_user_id = 0;
 for my $col (@$log_columns) {
-  $has_user_id = 1 if $col->[1] eq 'user_id';
+	$has_user_id = 1 if $col->[1] eq 'user_id';
 }
 unless ($has_user_id) {
   $dbh->do("DROP TABLE IF EXISTS log");
