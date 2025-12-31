@@ -313,8 +313,8 @@ get '/new' => sub {
 };
 
 post '/new' => sub {
-  my $c = shift;
-  my $p = $c->req->body_params;
+	my $c = shift;
+	my $p = $c->req->body_params;
 
   my $user_id = $c->session('user_id');
   my $call = uc($p->param('call') // '');
@@ -327,7 +327,7 @@ post '/new' => sub {
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     undef,
     $call, $p->param('date'), $p->param('time'), $p->param('frequency'), $p->param('mode'),
-    $p->('power'), $p->param('rst_sent'), $p->param('rst_recv'), $p->param('grid'),
+    $p->param('power') // '', $p->param('rst_sent'), $p->param('rst_recv'), $p->param('grid'),
     $p->param('qsl_sent'), $p->param('qsl_recv'), $p->param('notes'), $user_id
   );
   $c->redirect_to('/');
