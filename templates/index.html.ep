@@ -41,17 +41,21 @@
 % for my $col (@columns) {
       <th draggable="true" data-field="<%= $col->[1] %>"><%= $col->[0] %></th>
 % }
-      <th>Actions</th>
+      <th data-field="actions">Actions</th>
     </tr>
   </thead>
+
   <tbody id="log-body">
 % for my $entry (@$log) {
     <tr>
 %   for my $col (@columns) {
       <td data-field="<%= $col->[1] %>"><%= $entry->{$col->[1]} // '' %></td>
 %   }
-      <td>
-        <form method="post" action="/delete/<%= $entry->{id} %>" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this entry?');">
+      <td data-field="actions">
+        <a href="/edit/<%= $entry->{id} %>" class="btn btn-sm btn-primary">Edit</a>
+        <form method="post" action="/delete/<%= $entry->{id} %>"
+              style="display:inline"
+              onsubmit="return confirm('Are you sure you want to delete this entry?');">
           <button type="submit" class="btn btn-sm btn-danger">Delete</button>
         </form>
         <a href="/undo/<%= $entry->{id} %>" class="btn btn-sm btn-secondary">Undo</a>

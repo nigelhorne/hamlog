@@ -1,60 +1,65 @@
 % layout 'default';
 % title 'Add New QSO';
+% my $entry   = stash('entry') || {};
+% my $is_edit  = stash('is_edit') || 0;
 
-<h1>Add New QSO</h1>
+<h1><%= $is_edit ? 'Edit QSO' : 'Add New QSO' %></h1>
 
-<form method="POST" action="/new">
+<form method="post" action="<%= $is_edit ? '/edit/' . $entry->{id} : '/new' %>">
   <fieldset>
     <legend>QSO Details</legend>
 
     <label for="call">Call Sign:</label>
-    <input type="text" id="call" name="call" required maxlength="15" autofocus>
+    <input type="text" id="call" name="call" required maxlength="15" autofocus value="<%= stash('entry')->{call} // '' %>">
 
     <label for="date">Date (YYYY-MM-DD):</label>
-    <input type="date" id="date" name="date" value="<%= stash('now_date') %>" required>
+    <input type="date" id="date" name="date" required value="<%= $is_edit ? stash('entry')->{date} : stash('now_date') %>">
 
     <label for="time">Time (HH:MM UTC):</label>
-    <input type="time" id="time" name="time" value="<%= stash('now_time') %>" required>
+    <input type="time" id="time" name="time" required value="<%= $is_edit ? stash('entry')->{time} : stash('now_time') %>">
 
     <label for="frequency">Frequency (MHz):</label>
-    <input type="text" id="frequency" name="frequency" placeholder="e.g. 14.070" pattern="^\d+(\.\d+)?$">
+    <input type="text" id="frequency" name="frequency" placeholder="e.g. 14.070" pattern="^\d+(\.\d+)?$" value="<%= stash('entry')->{frequency} // '' %>">
 
-    <label for="mode">Mode:</label>
-    <select id="mode" name="mode" required>
-      % my @modes = ('CW', 'SSB', 'FM', 'AM', 'RTTY', 'FT8', 'JT65', 'Other');
-      % for my $mode (@modes) {
-        <option value="<%= $mode %>"><%= $mode %></option>
-      % }
-    </select>
+<label for="mode">Mode:</label>
+<select id="mode" name="mode" required>
+  % my @modes = ('CW', 'SSB', 'FM', 'AM', 'RTTY', 'FT8', 'JT65', 'Other');
+  % for my $mode (@modes) {
+    <option value="<%= $mode %>" <%= ($entry->{mode} // '') eq $mode ? 'selected' : '' %>><%= $mode %></option>
+  % }
+</select>
 
-    <label for="power">Power (W):</label>
-    <input type="text" id="power" name="power" placeholder="e.g. 100" pattern="^\d+(\.\d+)?$">
+	<label for="power">Power (W):</label>
+	<input type="text" id="power" name="power"
+	       placeholder="e.g. 100"
+	       pattern="^\d+(\.\d+)?$"
+	       value="<%= stash('entry')->{power} // '' %>">
 
     <label for="rst_sent">RST Sent:</label>
-    <input type="text" id="rst_sent" name="rst_sent" maxlength="3" placeholder="e.g. 59">
+    <input type="text" id="rst_sent" name="rst_sent" maxlength="3" placeholder="e.g. 59" value="<%= stash('entry')->{rst_set} // '' %>">
 
     <label for="rst_recv">RST Received:</label>
-    <input type="text" id="rst_recv" name="rst_recv" maxlength="3" placeholder="e.g. 59">
+    <input type="text" id="rst_recv" name="rst_recv" maxlength="3" placeholder="e.g. 59" value="<%= stash('entry')->{rst_recv} // '' %>">
 
     <label for="grid">Grid Square:</label>
-    <input type="text" id="grid" name="grid" maxlength="6" placeholder="e.g. FN31pr">
+    <input type="text" id="grid" name="grid" maxlength="6" placeholder="e.g. FN31pr" value="<%= stash('entry')->{grid} // '' %>">
 
     <label for="qsl_sent">QSL Sent:</label>
     <select id="qsl_sent" name="qsl_sent">
       <option value="">--</option>
-      <option value="Yes">Yes</option>
-      <option value="No">No</option>
+    <option value="Yes" <%= ($entry->{qsl_sent} // '') eq 'Yes' ? 'selected' : '' %>>Yes</option>
+    <option value="No" <%= ($entry->{qsl_sent} // '') eq 'No' ? 'selected' : '' %>>No</option>
     </select>
 
     <label for="qsl_recv">QSL Received:</label>
     <select id="qsl_recv" name="qsl_recv">
       <option value="">--</option>
-      <option value="Yes">Yes</option>
-      <option value="No">No</option>
+    <option value="Yes" <%= ($entry->{qsl_recv} // '') eq 'Yes' ? 'selected' : '' %>>Yes</option>
+    <option value="No" <%= ($entry->{qsl_recv} // '') eq 'No' ? 'selected' : '' %>>No</option>
     </select>
 
     <label for="notes">Notes:</label>
-    <textarea id="notes" name="notes" rows="4" cols="40" placeholder="Additional info or comments"></textarea>
+    <textarea id="notes" name="notes" rows="4" cols="40" placeholder="Additional info or comments"><%= stash('entry')->{notes} // '' %></textarea>
 
     <br><br>
     <button type="submit">Add QSO</button>

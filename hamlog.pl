@@ -321,7 +321,12 @@ get '/new' => sub {
   my $c = shift;
   my $now = strftime("%Y-%m-%d", localtime);
   my $time = strftime("%H:%M", localtime);
-  $c->stash(now_date => $now, now_time => $time);
+    $c->stash(
+    now_date => $now,
+    now_time => $time,
+    entry    => {},   # template has a hashref
+    is_edit  => 0,    # indicate it’s a new entry
+  );
   $c->render(template => 'new');
 };
 
@@ -373,6 +378,50 @@ get '/undo/:id' => sub {
   }
   $c->redirect_to('/');
 };
+
+get '/edit/:id' => sub {
+  my $c  = shift;
+  my $id = $c->param('id');
+  my $user_id = $c->session('user_id');
+
+  my $entry = $c->db->selectrow_hashref(
+    'SELECT * FROM log WHERE id = ? AND user_id = ?',
+    undef,
+    $id, $user_id
+  ) or return $c->reply->not_found;
+
+  $c->stash(
+    entry   => $entry,
+    is_edit => 1,
+  );
+
+  $c->render(template => 'new');  # reuse form
+};
+
+
+post '/edit/:id' => sub {
+  my $c  = shift;
+  my $id = $c->param('id');
+  my $p  = $c->req->params->to_hash;
+  my $user_id = $c->session('user_id');   # <-- use session
+
+  $c->db->do(
+    q{
+      UPDATE log SET
+        call = ?, date = ?, time = ?, frequency = ?, mode = ?, power = ?,
+        rst_sent = ?, rst_recv = ?, grid = ?, qsl_sent = ?, qsl_recv = ?, notes = ?
+      WHERE id = ? AND user_id = ?
+    },
+    undef,
+    map { $p->{$_} }
+      qw(call date time frequency mode power rst_sent rst_recv grid qsl_sent qsl_recv notes),
+    $id, $user_id
+  );
+
+  $c->flash(message => 'QSO updated');
+  $c->redirect_to('/');
+};
+
 
 get '/import' => sub {
   my $c = shift;
