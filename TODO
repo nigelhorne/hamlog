@@ -1,0 +1,47 @@
+🔄 5. Auto-Fill Lookup via Call Sign
+Use an API (like HamQTH, QRZ, or callook.info) to:
+
+Auto-fill name, QTH, grid square, DXCC.
+
+Optionally cache previous lookups in DB.
+
+📡 6. Live Spotting / Cluster Integration
+Display recent DX spots.
+
+Suggest call signs to chase that you haven’t worked before.
+
+🧾 7. Printable QSL Cards or Labels
+Generate a printable card/label (PDF) for each QSO or batch.
+
+Include station info, RST, frequency, and a custom logo.
+
+📊 8. Advanced Statistics
+Charts for:
+
+QSOs by band/mode over time.
+
+Countries/DXCC entities worked/confirmed.
+
+Daily/weekly logging habits.
+
+🛠️ 9. Settings Panel
+Let user customize:
+
+Default mode/frequency.
+
+Preferred sort order.
+
+Theme (dark/light).
+
+Display callsign aliases.
+
+🔁 10. API Support
+Provide JSON/REST endpoints for:
+
+Listing QSOs.
+
+Submitting QSOs.
+
+Map data.
+
+
