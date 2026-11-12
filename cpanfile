@@ -1,4 +1,6 @@
+requires 'Ham::Locator';
 requires 'Mojolicious', '9.0';             # Mojolicious web framework
+requires 'Mojolicious::Plugin::Buffer';     # Response compression, ETag and HTML optimisation
 requires 'DBD::SQLite';                    # SQLite database backend
 requires 'DBI';                            # Database interface
 requires 'PDF::API2';                      # For generating QSL PDF cards

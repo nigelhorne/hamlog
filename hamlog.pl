@@ -9,6 +9,9 @@ use Text::CSV;
 use Mojo::JSON;
 use PDF::API2;
 
+# Compress, ETag and minify responses
+plugin 'Buffer' => {optimise_content => 1};
+
 # Enable sessions
 app->secrets(['Password123']);	# change to a strong secret in production
 
